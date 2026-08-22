@@ -1,7 +1,83 @@
-<!doctype html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>AI Photo Studio</title><link rel="stylesheet" href="style.css"><script src="https://telegram.org/js/telegram-web-app.js"></script></head><body><main class="app">
-<section class="hero" id="homeScreen"><div class="topbar"><span class="badge">AI PHOTO STUDIO</span><button class="profile-btn" id="profileBtn">👤</button></div><h1>Твоя<br><span>AI-фотосессия</span></h1><p>Одно фото → десятки образов, созданных специально для тебя.</p><div class="balance" id="balance">💎 0 кредитов</div><div class="preview"><div class="preview-card card-a">LUXURY</div><div class="preview-card card-b">CINEMATIC</div><div class="preview-card card-c">COUPLE</div></div><h3>Что умеем</h3><div class="showcase" id="showcase"></div><button class="primary" id="startBtn">Создать фотосессию</button><div class="hint">3 генерации бесплатно для новых пользователей</div></section>
-<section class="screen hidden" id="uploadScreen"><button class="back" id="backBtn">← Назад</button><h2>Загрузи фото</h2><p>Лучше всего подойдёт чёткое фото лица при хорошем освещении.</p><label class="upload"><input id="photoInput" type="file" accept="image/*"><div id="uploadContent"><div class="upload-icon">＋</div><strong>Выбрать фотографию</strong><span>JPG, PNG · до 10 МБ</span></div></label><div class="photo-preview hidden" id="photoPreview"><img id="previewImg" alt="Фото"></div><button class="primary disabled" id="continueBtn">Продолжить</button></section>
-<section class="screen hidden" id="styleScreen"><button class="back" id="styleBackBtn">← Назад</button><h2>Выбери образ</h2><p>Выбери вариант из витрины. Стоимость списывается кредитами после бесплатных генераций.</p><div class="styles" id="styles"></div><button class="primary" id="generateBtn">Сгенерировать</button></section>
-<section class="screen hidden" id="profileScreen"><button class="back" id="profileBackBtn">← Назад</button><h2>Личный кабинет</h2><div class="profile-card"><strong id="profileName">Пользователь</strong><span id="profileUsername"></span><div class="big-balance" id="profileBalance">💎 0</div><small id="freeInfo">Бесплатные генерации: 3</small></div><button class="primary" id="topupBtn">Пополнить баланс</button><h3>История генераций</h3><div id="history" class="history"></div><h3>Платежи</h3><div id="payments" class="history"></div></section>
-<section class="screen hidden" id="adminScreen"><button class="back" id="adminBackBtn">← Назад</button><h2>Админка</h2><div class="admin-grid" id="adminStats"></div><h3>Пользователи</h3><div id="adminUsers" class="history"></div><h3>Витрина</h3><form id="showcaseForm" class="admin-form" enctype="multipart/form-data"><input name="title" placeholder="Название образа" required><input name="category" placeholder="Категория" value="Другое"><textarea name="description" placeholder="Описание"></textarea><input name="priceCredits" type="number" min="0" value="2"><label><input name="isPopular" type="checkbox" value="1"> 🔥 Популярный</label><input name="images" type="file" accept="image/*" multiple><button class="primary">Добавить образ</button></form><div id="adminShowcase" class="history"></div></section>
-</main><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0d"><meta name="color-scheme" content="dark"><title>PHOTOAI — AI Photo Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"><script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<main class="app">
+  <section id="homeScreen" class="screen home">
+    <header class="topbar"><div class="brand"><span class="brand-mark">✦</span><span>PHOTO<span>AI</span></span></div><button class="icon-btn" id="profileBtn" aria-label="Профиль">○</button></header>
+    <div class="hero-copy"><div class="eyebrow">AI PHOTO STUDIO</div><h1>Твоя лучшая<br><em>версия.</em></h1><p>Один снимок. Новый образ. Выбирай готовую сцену — остальное сделает AI.</p></div>
+    <div class="hero-stack"><div class="hero-card back-card"><span>HER</span></div><div class="hero-card main-card"><div class="shine"></div><span>YOUR<br>NEXT LOOK</span><small>PHOTOAI</small></div><div class="hero-card front-card"><span>COUPLE</span></div></div>
+    <div class="free-pill"><b>1</b><span>бесплатная генерация<br><small>для нового пользователя</small></span></div>
+    <button class="primary hero-cta" id="startBtn">Создать фото <span>→</span></button>
+    <div class="section-head"><div><small>ПОПУЛЯРНОЕ</small><h2>Выбери настроение</h2></div></div>
+    <div class="showcase" id="showcase"></div>
+  </section>
+
+  <section class="screen hidden" id="categoryScreen">
+    <header class="page-head"><div><div class="eyebrow" id="categoryEyebrow">КОЛЛЕКЦИЯ</div><h2 id="categoryTitle">Для неё</h2></div></header>
+    <p id="categoryDesc" class="muted">Готовые образы, которые хочется сохранить.</p>
+    <div class="showcase" id="categoryShowcase"></div>
+  </section>
+
+  <section class="screen hidden" id="uploadScreen">
+    <button class="back" id="backBtn">← Назад</button><div class="step">01 / 02</div><h2>Начнём с фото</h2>
+    <p>Выбери один чёткий снимок. Лицо должно быть хорошо видно.</p>
+    <label class="upload"><input id="photoInput" type="file" accept="image/*"><div id="uploadContent"><div class="upload-icon">＋</div><strong>Загрузить фотографию</strong><span>JPG, PNG · до 10 МБ</span></div></label>
+    <div class="photo-preview hidden" id="photoPreview"><img id="previewImg" alt="Предпросмотр"></div>
+    <button class="primary disabled" id="continueBtn">Выбрать образ <span>→</span></button>
+  </section>
+
+  <section class="screen hidden" id="styleScreen">
+    <button class="back" id="styleBackBtn">← Назад</button><div class="step">02 / 02</div><h2>Выбери образ</h2>
+    <p>Цена указана в кредитах. Первая генерация — бесплатно.</p><div class="styles" id="styles"></div>
+    <button class="primary" id="generateBtn">Сгенерировать <span>→</span></button>
+  </section>
+
+  <section class="screen hidden" id="profileScreen">
+    <div class="profile-top"><div><small>ЛИЧНЫЙ КАБИНЕТ</small><h2 id="profileName">Пользователь</h2><span id="profileUsername"></span></div><div class="balance-card"><small>БАЛАНС</small><b id="profileBalance">0</b><span>кредитов</span></div></div>
+    <div class="free-info" id="freeInfo">Бесплатная генерация: доступна</div>
+    <button class="primary" id="topupBtn">Пополнить баланс</button>
+    <div id="adminLinkWrap" class="hidden"><button class="secondary admin-access" id="adminBtn"><span>⚙</span> Панель управления</button></div>
+    <h3>Мои генерации</h3><div id="history" class="history"></div>
+    <h3>Платежи</h3><div id="payments" class="history"></div>
+  </section>
+
+  <section class="screen hidden" id="adminScreen">
+    <button class="back" id="adminBackBtn">← Кабинет</button>
+    <div class="admin-title"><div><div class="step">CONTROL CENTER</div><h2>Управление</h2></div><span class="admin-badge">@tgfsb</span></div>
+    <div class="admin-grid" id="adminStats"></div>
+    <div class="admin-tabs"><button class="active" data-atab="users">Пользователи</button><button data-atab="showcase">Витрина</button><button data-atab="settings">Настройки</button></div>
+    <div id="adminUsersTab">
+      <div class="admin-tools"><input id="userSearch" placeholder="Поиск по @username или имени"><button class="secondary" id="refreshAdmin">Обновить</button></div>
+      <div id="adminUsers" class="history"></div>
+    </div>
+    <div id="adminShowcaseTab" class="hidden">
+      <form id="showcaseForm" class="admin-form" enctype="multipart/form-data">
+        <input name="title" placeholder="Название образа" required><input name="category" placeholder="Категория" value="Для неё">
+        <textarea name="description" placeholder="Описание"></textarea><input name="priceCredits" type="number" min="0" value="2" placeholder="Цена в кредитах">
+        <label class="check"><input name="isPopular" type="checkbox" value="1"> Популярный</label><input name="images" type="file" accept="image/*" multiple>
+        <button class="primary">Добавить образ</button>
+      </form><div id="adminShowcase" class="history"></div>
+    </div>
+    <div id="adminSettingsTab" class="hidden">
+      <div class="setting-card"><div><b>Бесплатная генерация</b><span>Новые пользователи получают это количество попыток.</span></div><input id="freeLimitInput" type="number" min="0" max="20" value="1"><button class="secondary" id="saveSettings">Сохранить</button></div>
+      <div class="setting-card"><div><b>Администратор</b><span>Доступ закреплён за Telegram-аккаунтом <strong>@tgfsb</strong> через проверенные Telegram WebApp данные.</span></div></div>
+    </div>
+  </section>
+
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-nav="homeScreen"><span class="nav-icon">⌂</span><small>Главная</small></button>
+    <button class="nav-item" data-nav="her"><span class="nav-icon">♀</span><small>Для неё</small></button>
+    <button class="nav-item" data-nav="him"><span class="nav-icon">♂</span><small>Для него</small></button>
+    <button class="nav-item" data-nav="couple"><span class="nav-icon">♡</span><small>Пары</small></button>
+    <button class="nav-item" data-nav="profileScreen"><span class="nav-icon">○</span><small>Кабинет</small></button>
+  </nav>
+</main>
+<script src="app.js"></script>
+</body></html>

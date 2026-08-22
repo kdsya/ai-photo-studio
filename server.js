@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
   telegram_id TEXT UNIQUE NOT NULL,
   username TEXT, first_name TEXT, last_name TEXT,
   free_generations_used INTEGER NOT NULL DEFAULT 0,
-  free_generations_limit INTEGER NOT NULL DEFAULT 3,
+  free_generations_limit INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -72,10 +72,22 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 CREATE TABLE IF NOT EXISTS admins (
   telegram_id TEXT PRIMARY KEY,
+  username TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 `);
+db.prepare("INSERT OR IGNORE INTO settings (key,value) VALUES ('free_generation_limit','1')").run();
+// @tgfsb is the requested administrator. Set ADMIN_TELEGRAM_ID as the preferred stronger allowlist when known.
+if (process.env.ADMIN_TELEGRAM_ID) {
+  db.prepare("INSERT OR IGNORE INTO admins (telegram_id,username) VALUES (?,?)").run(String(process.env.ADMIN_TELEGRAM_ID), 'tgfsb');
+}
 
+// Policy: exactly ONE free generation per new user. Also migrate existing MVP users.
+db.prepare('UPDATE users SET free_generations_limit=1 WHERE free_generations_limit<>1').run();
 const seed = db.prepare('SELECT COUNT(*) c FROM showcase_styles').get().c;
 if (!seed) {
   const insert = db.prepare(`INSERT INTO showcase_styles (title,category,description,price_credits,is_active,is_popular,sort_order) VALUES (?,?,?,?,1,?,?)`);
@@ -107,7 +119,7 @@ function parseInitData(initData) {
   if (!hash || !botToken || !authDate) return null;
   if (Date.now()/1000 - authDate > 86400) return null;
   params.delete('hash');
-  const dataCheckString = [...params.entries()].sort(([a],[b]) => a.localeCompare(b)).map(([k,v]) => `${k}=${v}`).join('\\n');
+  const dataCheckString = [...params.entries()].sort(([a],[b]) => a.localeCompare(b)).map(([k,v]) => `${k}=${v}`).join('\n');
   const secret = crypto.createHmac('sha256','WebAppData').update(botToken).digest();
   const calculated = crypto.createHmac('sha256', secret).update(dataCheckString).digest('hex');
   if (!crypto.timingSafeEqual(Buffer.from(calculated), Buffer.from(hash))) return null;
@@ -119,6 +131,8 @@ function upsertUser(tgUser) {
   const stmt = db.prepare(`INSERT INTO users (telegram_id,username,first_name,last_name) VALUES (?,?,?,?)
     ON CONFLICT(telegram_id) DO UPDATE SET username=excluded.username, first_name=excluded.first_name, last_name=excluded.last_name, updated_at=CURRENT_TIMESTAMP`);
   stmt.run(String(tgUser.id), tgUser.username || null, tgUser.first_name || null, tgUser.last_name || null);
+  const limit = Number(db.prepare("SELECT value FROM settings WHERE key='free_generation_limit'").get()?.value || 1);
+  db.prepare('UPDATE users SET free_generations_limit=? WHERE telegram_id=?').run(limit, String(tgUser.id));
   const user = db.prepare('SELECT * FROM users WHERE telegram_id=?').get(String(tgUser.id));
   db.prepare('INSERT OR IGNORE INTO credits (user_id,balance) VALUES (?,0)').run(user.id);
   return user;
@@ -134,7 +148,8 @@ function requireAdmin(req,res,next) {
     const id = String(req.tgUser.id);
     const configured = process.env.ADMIN_TELEGRAM_ID && id === String(process.env.ADMIN_TELEGRAM_ID);
     const tableAdmin = !!db.prepare('SELECT 1 FROM admins WHERE telegram_id=?').get(id);
-    if (!configured && !tableAdmin) return res.status(403).json({ error:'Admin access denied' });
+    const usernameAdmin = String(req.tgUser.username || '').toLowerCase() === String(process.env.ADMIN_TELEGRAM_USERNAME || 'tgfsb').toLowerCase();
+    if (!configured && !tableAdmin && !usernameAdmin) return res.status(403).json({ error:'Admin access denied' });
     next();
   });
 }
@@ -213,6 +228,25 @@ app.patch('/api/admin/showcase/:id', requireAdmin, (req,res)=>{
   if (!allowed.length) return res.status(400).json({error:'Nothing to update'});
   const values=allowed.map(k=>req.body[k]);
   db.prepare(`UPDATE showcase_styles SET ${allowed.map(k=>`${k}=?`).join(',')},updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(...values,Number(req.params.id));
+  res.json({ok:true});
+});
+
+
+app.get('/api/admin/settings', requireAdmin, (req,res)=>{
+  const freeGenerationLimit=Number(db.prepare("SELECT value FROM settings WHERE key='free_generation_limit'").get()?.value||1);
+  res.json({freeGenerationLimit});
+});
+app.patch('/api/admin/settings', requireAdmin, (req,res)=>{
+  const n=Number(req.body.freeGenerationLimit);
+  if(!Number.isInteger(n)||n<0||n>20)return res.status(400).json({error:'Free limit must be 0-20'});
+  db.prepare("INSERT INTO settings(key,value) VALUES('free_generation_limit',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(String(n));
+  db.prepare('UPDATE users SET free_generations_limit=?').run(n);
+  res.json({ok:true,freeGenerationLimit:n});
+});
+app.post('/api/admin/users/:id/reset-free', requireAdmin, (req,res)=>{
+  const user=db.prepare('SELECT id FROM users WHERE id=?').get(Number(req.params.id));
+  if(!user)return res.status(404).json({error:'User not found'});
+  db.prepare('UPDATE users SET free_generations_used=0 WHERE id=?').run(user.id);
   res.json({ok:true});
 });
 
