@@ -1,45 +1,17 @@
-const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); }
-
-const $ = id => document.getElementById(id);
-const startBtn = $("startBtn");
-const uploadScreen = $("uploadScreen");
-const styleScreen = $("styleScreen");
-const hero = document.querySelector(".hero");
-const photoInput = $("photoInput");
-const photoPreview = $("photoPreview");
-const previewImg = $("previewImg");
-const continueBtn = $("continueBtn");
-
-startBtn.onclick = () => { hero.classList.add("hidden"); uploadScreen.classList.remove("hidden"); };
-$("backBtn").onclick = () => { uploadScreen.classList.add("hidden"); hero.classList.remove("hidden"); };
-$("styleBackBtn").onclick = () => { styleScreen.classList.add("hidden"); uploadScreen.classList.remove("hidden"); };
-
-photoInput.onchange = e => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  if (file.size > 10 * 1024 * 1024) {
-    alert("Фото больше 10 МБ");
-    photoInput.value = "";
-    return;
-  }
-  previewImg.src = URL.createObjectURL(file);
-  photoPreview.classList.remove("hidden");
-  continueBtn.classList.remove("disabled");
-};
-
-continueBtn.onclick = () => {
-  uploadScreen.classList.add("hidden");
-  styleScreen.classList.remove("hidden");
-};
-
-document.querySelectorAll(".style").forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll(".style").forEach(x => x.classList.remove("active"));
-    btn.classList.add("active");
-  };
-});
-
-$("generateBtn").onclick = () => {
-  alert("MVP готов: следующим этапом подключаем AI-генерацию.");
-};
+const tg=window.Telegram?.WebApp;if(tg){tg.ready();tg.expand();}
+const $=id=>document.getElementById(id);const screens=['homeScreen','uploadScreen','styleScreen','profileScreen','adminScreen'];let currentStyle=null;let selectedFile=null;let me=null;
+const initData=tg?.initData||'';const api=async(path,options={})=>{options.headers={...(options.headers||{}),'X-Telegram-Init-Data':initData};const r=await fetch(path,options);const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Ошибка');return d;};
+function show(id){screens.forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden');window.scrollTo(0,0);}
+async function loadMe(){try{me=await api('/api/me');$('balance').textContent=`💎 ${me.credits} кредитов`;$('profileBalance').textContent=`💎 ${me.credits}`;$('profileName').textContent=[me.user.first_name,me.user.last_name].filter(Boolean).join(' ')||'Пользователь';$('profileUsername').textContent=me.user.username?`@${me.user.username}`:'';$('freeInfo').textContent=`Бесплатные генерации: ${me.freeAvailable}`;renderHistory(me);}catch(e){$('balance').textContent='💎 3 бесплатные генерации';}}
+function renderHistory(x){$('history').innerHTML=x.history.length?x.history.map(g=>`<div class="history-item"><b>${g.style_title||'Образ'}</b><span>${g.status} · ${g.credits_spent}💎</span></div>`).join(''):'<div class="empty">Пока нет генераций</div>';$('payments').innerHTML=x.purchases.length?x.purchases.map(p=>`<div class="history-item"><b>${p.description||'Пополнение'}</b><span>+${p.credits}💎 · ${p.status}</span></div>`).join(''):'<div class="empty">Пока нет платежей</div>';}
+async function loadShowcase(){const rows=await api('/api/showcase');$('showcase').innerHTML=rows.map(s=>`<button class="showcase-item" data-id="${s.id}"><div class="showcase-image">${s.preview_images?.[0]?`<img src="${s.preview_images[0]}">`:'✨'}</div><b>${s.title}</b><span>${s.category} · ${s.price_credits}💎</span></button>`).join('');$('styles').innerHTML=rows.map(s=>`<button class="style ${currentStyle?.id===s.id?'active':''}" data-id="${s.id}"><span>${s.is_popular?'🔥 ':''}${s.title}</span><small>${s.price_credits}💎</small></button>`).join('');document.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{currentStyle=rows.find(x=>x.id==b.dataset.id);document.querySelectorAll('.style').forEach(x=>x.classList.remove('active'));show('styleScreen');document.querySelector(`.style[data-id="${b.dataset.id}"]`)?.classList.add('active');});}
+$('startBtn').onclick=()=>show('uploadScreen');$('backBtn').onclick=()=>show('homeScreen');$('styleBackBtn').onclick=()=>show('uploadScreen');$('profileBtn').onclick=async()=>{await loadMe();show('profileScreen');};$('profileBackBtn').onclick=()=>show('homeScreen');$('adminBackBtn').onclick=()=>show('homeScreen');
+$('photoInput').onchange=e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>10*1024*1024){alert('Фото больше 10 МБ');return;}selectedFile=f;$('previewImg').src=URL.createObjectURL(f);$('photoPreview').classList.remove('hidden');$('continueBtn').classList.remove('disabled');};$('continueBtn').onclick=()=>show('styleScreen');
+$('generateBtn').onclick=async()=>{if(!currentStyle){alert('Выбери образ');return;}try{const result=await api('/api/generations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({showcaseStyleId:currentStyle.id,sourceImage:selectedFile?.name})});alert(result.message);await loadMe();}catch(e){if(e.message==='Not enough credits')alert('Не хватает кредитов. Пополни баланс в личном кабинете.');else alert(e.message);}};
+$('topupBtn').onclick=async()=>{const n=prompt('Сколько кредитов начислить для демо?', '20');if(!n)return;try{await api('/api/credits/topup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credits:Number(n)})});await loadMe();}catch(e){alert(e.message);}};
+async function loadAdmin(){try{const s=await api('/api/admin/overview');$('adminStats').innerHTML=`<div>👥 <b>${s.users}</b><small>пользователей</small></div><div>🎨 <b>${s.generations}</b><small>генераций</small></div><div>💎 <b>${s.paidCredits}</b><small>кредитов</small></div><div>🖼️ <b>${s.activeShowcase}</b><small>образов</small></div>`;const users=await api('/api/admin/users');$('adminUsers').innerHTML=users.map(u=>`<div class="history-item"><b>${u.first_name||''} ${u.last_name||''} ${u.username?'@'+u.username:''}</b><span>${u.balance}💎 <button onclick="changeCredits(${u.id})">±</button></span></div>`).join('');const styles=await api('/api/admin/showcase');$('adminShowcase').innerHTML=styles.map(s=>`<div class="history-item"><b>${s.title}</b><span>${s.is_active?'виден':'скрыт'} · ${s.price_credits}💎 <button onclick="toggleStyle(${s.id},${s.is_active?0:1})">${s.is_active?'скрыть':'показать'}</button></span></div>`).join('');show('adminScreen');}catch(e){alert(e.message);}}
+window.changeCredits=async id=>{const n=prompt('Изменение баланса (+/- кредиты):','10');if(!n)return;await api('/api/admin/users/'+id+'/credits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:Number(n)})});loadAdmin();};window.toggleStyle=async(id,v)=>{await api('/api/admin/showcase/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_active:v})});loadAdmin();};
+$('showcaseForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/admin/showcase',{method:'POST',body:new FormData(e.target)});e.target.reset();loadAdmin();loadShowcase();}catch(x){alert(x.message);}};
+loadShowcase();loadMe();
+// Для владельца можно открыть админку из Telegram-команды/будущего скрытого меню; сам API всё равно проверяет Telegram ID.
+window.openAdmin=loadAdmin;
