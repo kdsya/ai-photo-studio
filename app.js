@@ -247,7 +247,6 @@ async function loadMe() {
     $('freeInfo').textContent = me.freeAvailable > 0 ? `🎁 Бесплатных генераций: ${me.freeAvailable}` : 'Бесплатная генерация уже использована';
     renderHistory(me);
     
-    // Проверяем, админ ли пользователь (из данных с сервера)
     const isAdmin = me.isAdmin === true || localAdmin;
     $('adminLinkWrap').classList.toggle('hidden', !isAdmin);
   } catch (e) {
@@ -289,7 +288,6 @@ async function loadShowcase() {
   });
 }
 
-// Навигация
 document.querySelectorAll('.nav-item').forEach(b => {
   b.onclick = async () => {
     const n = b.dataset.nav;
@@ -338,4 +336,159 @@ $('generateBtn').onclick = async () => {
     await loadMe();
     show('profileScreen');
   } catch (e) {
-    alert(e.message === 'Not enough credits' ? '
+    alert(e.message === 'Not enough credits' ? 'Не хватает кредитов. Пополни баланс.' : e.message);
+  }
+};
+
+$('topupBtn').onclick = async () => {
+  const n = prompt('Демо-пополнение. В продакшене подключаем Telegram Stars/платёжный провайдер. Кредитов:', '20');
+  if (!n) return;
+  try {
+    await api('/api/credits/topup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credits: Number(n) })
+    });
+    await loadMe();
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+$('adminBtn').onclick = loadAdmin;
+
+async function loadAdmin() {
+  try {
+    const s = await api('/api/admin/overview');
+    $('adminStats').innerHTML = `
+      <div>👥 <b>${s.users}</b><small>пользователей</small></div>
+      <div>⚡ <b>${s.generations}</b><small>генераций</small></div>
+      <div>💎 <b>${s.paidCredits}</b><small>оплачено кредитов</small></div>
+      <div>✦ <b>${s.activeShowcase}</b><small>активных образов</small></div>
+    `;
+    const settings = await api('/api/admin/settings');
+    $('freeLimitInput').value = settings.freeGenerationLimit;
+    await renderAdminUsers();
+    await renderAdminShowcase();
+    show('adminScreen');
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function renderAdminUsers() {
+  const users = await api('/api/admin/users');
+  const q = ($('userSearch').value || '').toLowerCase();
+  const rows = users.filter(u => `${u.username||''} ${u.first_name||''} ${u.last_name||''}`.toLowerCase().includes(q));
+  $('adminUsers').innerHTML = rows.map(u => `
+    <div class="history-item">
+      <div>
+        <b>${[u.first_name,u.last_name].filter(Boolean).join(' ') || 'Без имени'}</b>
+        <div style="color:#666;font-size:9px">${u.username?'@'+u.username:'нет username'} · ID ${u.telegram_id}</div>
+      </div>
+      <span>${u.balance}💎 <button onclick="changeCredits(${u.id})">±</button><button onclick="resetFree(${u.id})">1 free</button></span>
+    </div>
+  `).join('') || '<div class="empty">Пользователь не найден</div>';
+}
+
+async function renderAdminShowcase() {
+  const styles = await api('/api/admin/showcase');
+  $('adminShowcase').innerHTML = styles.map(s => `
+    <div class="history-item">
+      <b>${s.title}<small style="display:block;color:#666">${s.category} · ${s.price_credits}💎</small></b>
+      <span>${s.is_active?'виден':'скрыт'} <button onclick="toggleStyle(${s.id},${s.is_active?0:1})">${s.is_active?'скрыть':'показать'}</button></span>
+    </div>
+  `).join('');
+}
+
+window.changeCredits = async id => {
+  const n = prompt('Изменить баланс (+/-):', '10');
+  if (!n) return;
+  try {
+    await api('/api/admin/users/' + id + '/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: Number(n) })
+    });
+    renderAdminUsers();
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+window.resetFree = async id => {
+  if (!confirm('Вернуть пользователю бесплатную генерацию?')) return;
+  try {
+    await api('/api/admin/users/' + id + '/reset-free', {
+      method: 'POST'
+    });
+    renderAdminUsers();
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+window.toggleStyle = async (id, v) => {
+  try {
+    await api('/api/admin/showcase/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: v })
+    });
+    await renderAdminShowcase();
+    await loadShowcase();
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+$('showcaseForm').onsubmit = async e => {
+  e.preventDefault();
+  try {
+    await api('/api/admin/showcase', {
+      method: 'POST',
+      body: new FormData(e.target)
+    });
+    e.target.reset();
+    await renderAdminShowcase();
+    await loadShowcase();
+  } catch (x) {
+    alert(x.message);
+  }
+};
+
+$('saveSettings').onclick = async () => {
+  try {
+    await api('/api/admin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ freeGenerationLimit: Number($('freeLimitInput').value) })
+    });
+    alert('Сохранено');
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+$('userSearch').oninput = () => renderAdminUsers();
+$('refreshAdmin').onclick = loadAdmin;
+
+document.querySelectorAll('.admin-tabs button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.admin-tabs button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    ['users','showcase','settings'].forEach(x => $(`admin${x[0].toUpperCase()+x.slice(1)}Tab`).classList.add('hidden'));
+    $(`admin${b.dataset.atab[0].toUpperCase()+b.dataset.atab.slice(1)}Tab`).classList.remove('hidden');
+  };
+});
+
+(async () => {
+  try {
+    await loadShowcase();
+    if (localAdmin && tg?.initData) {
+      setTimeout(() => loadMe().then(() => loadAdmin()), 350);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+})();
