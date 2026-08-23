@@ -56,16 +56,16 @@
 
   <!-- ЗАГРУЗКА ФОТО -->
   <section class="screen hidden" id="uploadScreen">
-    <button class="back" id="backBtn">← Назад</button>
+    <button class="back" id="uploadBackBtn">← Назад</button>
     <div class="step">01 / 02</div>
-    <h2>Начнём с фото</h2>
+    <h2 id="uploadTitle">Загрузи фото</h2>
     <p id="uploadHint">Выбери один чёткий снимок. Лицо должно быть хорошо видно.</p>
     
     <label class="upload" id="uploadLabel1">
       <input id="photoInput1" type="file" accept="image/*">
       <div id="uploadContent1">
         <div class="upload-icon">＋</div>
-        <strong id="uploadText1">Загрузить фотографию</strong>
+        <strong id="uploadText1">📸 Загрузить фото</strong>
         <span>JPG, PNG · до 10 МБ</span>
       </div>
     </label>
@@ -77,7 +77,7 @@
       <input id="photoInput2" type="file" accept="image/*">
       <div id="uploadContent2">
         <div class="upload-icon">＋</div>
-        <strong id="uploadText2">Загрузить вторую фотографию</strong>
+        <strong id="uploadText2">📸 Фото парня</strong>
         <span>JPG, PNG · до 10 МБ</span>
       </div>
     </label>
@@ -85,17 +85,7 @@
       <img id="previewImg2" alt="Предпросмотр">
     </div>
 
-    <button class="primary disabled" id="continueBtn">Выбрать образ <span>→</span></button>
-  </section>
-
-  <!-- ВЫБОР СТИЛЯ -->
-  <section class="screen hidden" id="styleScreen">
-    <button class="back" id="styleBackBtn">← Назад</button>
-    <div class="step">02 / 02</div>
-    <h2>Выбери образ</h2>
-    <p>Цена указана в кредитах. Первая генерация — бесплатно.</p>
-    <div class="styles" id="styles"></div>
-    <button class="primary" id="generateBtn">Сгенерировать <span>→</span></button>
+    <button class="primary disabled" id="continueBtn">Сгенерировать 40 фото <span>→</span></button>
   </section>
 
   <!-- КАБИНЕТ -->
