@@ -29,7 +29,8 @@ updateProfileAvatar();
 const $ = id => document.getElementById(id);
 const screens = ['homeScreen','categoryScreen','uploadScreen','styleScreen','profileScreen','adminScreen'];
 let currentStyle = null, selectedFile1 = null, selectedFile2 = null, me = null, allStyles = [], category = 'her';
-let currentCategory = '';
+let currentCategory = ''; // 'Девушки', 'Парни', 'Пары'
+let selectedStyle = null;
 const initData = tg?.initData || '';
 const unsafeUser = tg?.initDataUnsafe?.user || {};
 const localAdmin = String(unsafeUser.username || '').toLowerCase() === 'tgfsb';
@@ -233,47 +234,39 @@ function renderCards(rows, target) {
 
 function selectStyle(id) {
   currentStyle = allStyles.find(x => x.id === id);
-  const stylesEl = $('styles');
-  if (!stylesEl) return;
-  stylesEl.innerHTML = allStyles.map(s => `
-    <button class="style ${currentStyle?.id === s.id ? 'active' : ''}" data-id="${s.id}">
-      <span>${s.is_popular ? '🔥 ' : ''}${s.title}</span>
-      <small>${s.price_credits}💎 · ${s.category}</small>
-    </button>
-  `).join('');
-  stylesEl.querySelectorAll('[data-id]').forEach(b => {
-    b.onclick = () => {
-      currentStyle = allStyles.find(x => x.id == b.dataset.id);
-      stylesEl.querySelectorAll('.style').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-    };
-  });
-  show('styleScreen');
+  selectedStyle = currentStyle;
+  // Сохраняем выбранный стиль и переходим к загрузке фото
+  updateUploadScreen();
+  show('uploadScreen');
 }
 
 // === ЗАГРУЗКА ФОТО ===
-function updateUploadScreen(category) {
-  currentCategory = category;
+function updateUploadScreen() {
   const label1 = document.getElementById('uploadLabel1');
   const label2 = document.getElementById('uploadLabel2');
   const hint = document.getElementById('uploadHint');
   const text1 = document.getElementById('uploadText1');
+  const text2 = document.getElementById('uploadText2');
   
-  if (category === 'Пары') {
-    label2.classList.remove('hidden');
-    hint.textContent = 'Загрузи две фотографии: парня и девушки. Лица должны быть хорошо видны.';
-    text1.textContent = 'Загрузить фото девушки';
-    document.getElementById('uploadText2').textContent = 'Загрузить фото парня';
-  } else {
-    label2.classList.add('hidden');
-    hint.textContent = 'Выбери один чёткий снимок. Лицо должно быть хорошо видно.';
-    text1.textContent = 'Загрузить фотографию';
-  }
+  // Сбрасываем
+  selectedFile1 = null;
+  selectedFile2 = null;
   document.getElementById('photoPreview1').classList.add('hidden');
   document.getElementById('photoPreview2').classList.add('hidden');
   document.getElementById('continueBtn').classList.add('disabled');
-  selectedFile1 = null;
-  selectedFile2 = null;
+  
+  // В зависимости от категории
+  if (currentCategory === 'Пары') {
+    label2.classList.remove('hidden');
+    hint.textContent = 'Загрузи две фотографии: парня и девушки. Лица должны быть хорошо видны.';
+    text1.textContent = '📸 Фото девушки';
+    text2.textContent = '📸 Фото парня';
+  } else {
+    label2.classList.add('hidden');
+    hint.textContent = 'Загрузи одну чёткую фотографию. Лицо должно быть хорошо видно.';
+    text1.textContent = '📸 Загрузить фото';
+    text2.textContent = '';
+  }
 }
 
 function checkContinueEnabled() {
@@ -321,7 +314,6 @@ async function loadMe() {
 
 async function loadShowcase() {
   allStyles = await api('/api/showcase');
-  renderCards(allStyles.slice(0, 6), $('showcase'));
   const stylesEl = $('styles');
   if (stylesEl) {
     stylesEl.innerHTML = allStyles.map(s => `
@@ -335,6 +327,10 @@ async function loadShowcase() {
         currentStyle = allStyles.find(x => x.id == b.dataset.id);
         stylesEl.querySelectorAll('.style').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
+        // Переходим к загрузке фото после выбора стиля
+        selectedStyle = currentStyle;
+        updateUploadScreen();
+        show('uploadScreen');
       };
     });
   }
@@ -342,7 +338,7 @@ async function loadShowcase() {
 
 // === ОБРАБОТЧИКИ ===
 
-// КЛИК ПО ТРЁМ КАРТОЧКАМ
+// ТРИ КАРТОЧКИ НА ГЛАВНОЙ
 document.querySelectorAll('.hero-card[data-nav]').forEach(card => {
   card.addEventListener('click', function() {
     const nav = this.dataset.nav;
@@ -354,13 +350,26 @@ document.querySelectorAll('.hero-card[data-nav]').forEach(card => {
   });
 });
 
-// КНОПКА "СОЗДАТЬ ФОТО"
+// КНОПКА "СОЗДАТЬ ФОТО" — ведёт сразу на выбор стиля
 const startBtn = $('startBtn');
-if (startBtn) startBtn.onclick = () => {
-  if (!currentCategory) currentCategory = 'Девушки';
-  updateUploadScreen(currentCategory);
-  show('uploadScreen');
-};
+if (startBtn) {
+  startBtn.onclick = () => {
+    // Если уже есть категория, показываем её стили
+    if (currentCategory) {
+      // Показываем категорию
+      const categoryMap = {
+        'Девушки': 'her',
+        'Парни': 'him',
+        'Пары': 'couple'
+      };
+      const catKey = categoryMap[currentCategory] || 'her';
+      navCategory(catKey);
+    } else {
+      // Если нет категории, показываем Девушки по умолчанию
+      navCategory('her');
+    }
+  };
+}
 
 // АВАТАРКА → ПРОФИЛЬ
 const profileBtn = document.getElementById('profileBtn');
@@ -371,7 +380,7 @@ if (profileBtn) {
   });
 }
 
-// КНОПКА НАЗАД
+// КНОПКИ НАЗАД
 const categoryBackBtn = document.getElementById('categoryBackBtn');
 if (categoryBackBtn) categoryBackBtn.addEventListener('click', () => show('homeScreen'));
 
@@ -379,7 +388,16 @@ const backBtn = $('backBtn');
 if (backBtn) backBtn.onclick = () => show('homeScreen');
 
 const styleBackBtn = $('styleBackBtn');
-if (styleBackBtn) styleBackBtn.onclick = () => show('uploadScreen');
+if (styleBackBtn) styleBackBtn.onclick = () => {
+  // Возвращаемся к выбору стиля
+  const categoryMap = {
+    'Девушки': 'her',
+    'Парни': 'him',
+    'Пары': 'couple'
+  };
+  const catKey = categoryMap[currentCategory] || 'her';
+  navCategory(catKey);
+};
 
 const profileBackBtn = $('profileBackBtn');
 if (profileBackBtn) profileBackBtn.addEventListener('click', () => show('homeScreen'));
@@ -387,7 +405,7 @@ if (profileBackBtn) profileBackBtn.addEventListener('click', () => show('homeScr
 const adminBackBtn = $('adminBackBtn');
 if (adminBackBtn) adminBackBtn.onclick = () => { loadMe(); show('profileScreen'); };
 
-// ЗАГРУЗКА ФОТО
+// ЗАГРУЗКА ФОТО 1
 const photoInput1 = document.getElementById('photoInput1');
 if (photoInput1) {
   photoInput1.onchange = e => {
@@ -401,6 +419,7 @@ if (photoInput1) {
   };
 }
 
+// ЗАГРУЗКА ФОТО 2 (только для пар)
 const photoInput2 = document.getElementById('photoInput2');
 if (photoInput2) {
   photoInput2.onchange = e => {
@@ -414,30 +433,37 @@ if (photoInput2) {
   };
 }
 
+// КНОПКА "ПРОДОЛЖИТЬ" → генерация
 const continueBtn = $('continueBtn');
-if (continueBtn) continueBtn.onclick = () => show('styleScreen');
-
-// ГЕНЕРАЦИЯ
-const generateBtn = $('generateBtn');
-if (generateBtn) {
-  generateBtn.onclick = async () => {
-    if (!currentStyle) return alert('Выбери образ');
-    const formData = new FormData();
-    formData.append('showcaseStyleId', currentStyle.id);
+if (continueBtn) {
+  continueBtn.onclick = async () => {
+    if (!selectedStyle) return alert('Ошибка: стиль не выбран');
+    
+    // Проверяем загрузку фото
     if (currentCategory === 'Пары') {
       if (!selectedFile1 || !selectedFile2) return alert('Загрузи обе фотографии');
+    } else {
+      if (!selectedFile1) return alert('Загрузи фотографию');
+    }
+    
+    // Отправляем на генерацию
+    const formData = new FormData();
+    formData.append('showcaseStyleId', selectedStyle.id);
+    formData.append('category', currentCategory);
+    
+    if (currentCategory === 'Пары') {
       formData.append('sourceImage1', selectedFile1);
       formData.append('sourceImage2', selectedFile2);
     } else {
-      if (!selectedFile1) return alert('Загрузи фотографию');
       formData.append('sourceImage', selectedFile1);
     }
+    
     try {
       const result = await api('/api/generations', {
         method: 'POST',
         body: formData
       });
-      alert(result.message);
+      alert(result.message || '✅ Генерация запущена!');
       await loadMe();
       show('profileScreen');
     } catch (e) {
