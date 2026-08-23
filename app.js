@@ -38,12 +38,12 @@ const localAdmin = String(unsafeUser.username || '').toLowerCase() === 'tgfsb';
 
 const DEMO_KEY = 'photoai_demo_v3';
 const demoStyles = [
-  {id:1, title:'Элегантный портрет', category:'Для неё', description:'Изысканный кадр', price_credits:3, preview_images:[], is_active:1, is_popular:1},
-  {id:2, title:'Деловой образ', category:'Для него', description:'Уверенный стиль', price_credits:3, preview_images:[], is_active:1, is_popular:1},
+  {id:1, title:'Элегантный портрет', category:'Девушки', description:'Изысканный кадр', price_credits:3, preview_images:[], is_active:1, is_popular:1},
+  {id:2, title:'Деловой образ', category:'Парни', description:'Уверенный стиль', price_credits:3, preview_images:[], is_active:1, is_popular:1},
   {id:3, title:'Романтический', category:'Пары', description:'Нежные объятия', price_credits:4, preview_images:[], is_active:1, is_popular:1},
   {id:4, title:'Кинокадр', category:'Все', description:'Как из фильма', price_credits:3, preview_images:[], is_active:1, is_popular:1},
   {id:5, title:'Аниме-портрет', category:'Все', description:'Твой образ в аниме', price_credits:3, preview_images:[], is_active:1, is_popular:1},
-  {id:6, title:'Спортивный', category:'Для него', description:'Энергия и драйв', price_credits:3, preview_images:[], is_active:1, is_popular:0}
+  {id:6, title:'Спортивный', category:'Парни', description:'Энергия и драйв', price_credits:3, preview_images:[], is_active:1, is_popular:0}
 ];
 
 function demoState() {
@@ -209,17 +209,14 @@ function show(id) {
   const el = $(id);
   if (el) el.classList.remove('hidden');
   window.scrollTo(0, 0);
-  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
-  const n = document.querySelector(`.nav-item[data-nav="${id}"]`);
-  if (n) n.classList.add('active');
 }
 
 function navCategory(c) {
   category = c;
   const map = {
-    her: ['Для неё', 'ЖЕНСКАЯ КОЛЛЕКЦИЯ', 'Эстетика, lifestyle, fashion и кадры для соцсетей.'],
-    him: ['Для него', 'МУЖСКАЯ КОЛЛЕКЦИЯ', 'Business, fitness, travel и уверенные мужские образы.'],
-    couple: ['Парные', 'КОЛЛЕКЦИЯ ДЛЯ ДВОИХ', 'Совместные кадры — романтика, lifestyle и кино.']
+    her: ['Девушки', 'ЖЕНСКАЯ КОЛЛЕКЦИЯ', 'Эстетика, lifestyle, fashion и кадры для соцсетей.'],
+    him: ['Парни', 'МУЖСКАЯ КОЛЛЕКЦИЯ', 'Деловой, спортивный, брутальный — образы для уверенных парней.'],
+    couple: ['Пары', 'КОЛЛЕКЦИЯ ДЛЯ ДВОИХ', 'Романтика, свадьба, семейные портреты и совместные кадры.']
   };
   const m = map[c];
   if (m) {
@@ -269,41 +266,63 @@ function selectStyle(id) {
 
 async function loadMe() {
   try {
-    me = await api('/api/me');
-    $('profileBalance').textContent = me.credits;
-    $('profileName').textContent = [me.user.first_name, me.user.last_name].filter(Boolean).join(' ') || 'Пользователь';
-    $('profileUsername').textContent = me.user.username ? `@${me.user.username}` : '';
-    $('freeInfo').textContent = me.freeAvailable > 0 ? `🎁 Бесплатных генераций: ${me.freeAvailable}` : 'Бесплатная генерация уже использована';
-    renderHistory(me);
+    const response = await api('/api/me');
+    me = response;
+    
+    const profileName = document.getElementById('profileName');
+    const profileUsername = document.getElementById('profileUsername');
+    const profileBalance = document.getElementById('profileBalance');
+    const freeInfo = document.getElementById('freeInfo');
+    const adminLinkWrap = document.getElementById('adminLinkWrap');
+    const historyEl = document.getElementById('history');
+    const paymentsEl = document.getElementById('payments');
+    
+    if (profileName) {
+      profileName.textContent = [me.user?.first_name, me.user?.last_name].filter(Boolean).join(' ') || 'Пользователь';
+    }
+    if (profileUsername) {
+      profileUsername.textContent = me.user?.username ? `@${me.user.username}` : '';
+    }
+    if (profileBalance) {
+      profileBalance.textContent = me.credits || 0;
+    }
+    if (freeInfo) {
+      freeInfo.textContent = me.freeAvailable > 0 ? `🎁 Бесплатных генераций: ${me.freeAvailable}` : 'Бесплатная генерация уже использована';
+    }
+    
+    if (historyEl) {
+      historyEl.innerHTML = me.history?.length ? me.history.map(g => `
+        <div class="history-item">
+          <b>${g.style_title || 'Образ'}</b>
+          <span>${g.status} · ${g.credits_spent}💎</span>
+        </div>
+      `).join('') : '<div class="empty">Пока нет генераций</div>';
+    }
+    
+    if (paymentsEl) {
+      paymentsEl.innerHTML = me.purchases?.length ? me.purchases.map(p => `
+        <div class="history-item">
+          <b>${p.description || 'Пополнение'}</b>
+          <span>+${p.credits}💎 · ${p.status}</span>
+        </div>
+      `).join('') : '<div class="empty">Пока нет платежей</div>';
+    }
     
     const isAdmin = me.isAdmin === true || localAdmin;
-    const adminLink = $('adminLinkWrap');
-    if (adminLink) adminLink.classList.toggle('hidden', !isAdmin);
+    if (adminLinkWrap) {
+      adminLinkWrap.classList.toggle('hidden', !isAdmin);
+    }
   } catch (e) {
     console.error('LoadMe error:', e);
-    $('profileName').textContent = 'Открой из Telegram';
-    $('freeInfo').textContent = 'Авторизация доступна только внутри Telegram Mini App';
+    const profileName = document.getElementById('profileName');
+    const freeInfo = document.getElementById('freeInfo');
+    if (profileName) profileName.textContent = 'Открой из Telegram';
+    if (freeInfo) freeInfo.textContent = 'Авторизация доступна только внутри Telegram Mini App';
   }
-}
-
-function renderHistory(x) {
-  $('history').innerHTML = x.history.length ? x.history.map(g => `
-    <div class="history-item">
-      <b>${g.style_title || 'Образ'}</b>
-      <span>${g.status} · ${g.credits_spent}💎</span>
-    </div>
-  `).join('') : '<div class="empty">Пока нет генераций</div>';
-  $('payments').innerHTML = x.purchases.length ? x.purchases.map(p => `
-    <div class="history-item">
-      <b>${p.description || 'Пополнение'}</b>
-      <span>+${p.credits}💎 · ${p.status}</span>
-    </div>
-  `).join('') : '<div class="empty">Пока нет платежей</div>';
 }
 
 async function loadShowcase() {
   allStyles = await api('/api/showcase');
-  renderCards(allStyles.slice(0, 6), $('showcase'));
   const stylesEl = $('styles');
   if (stylesEl) {
     stylesEl.innerHTML = allStyles.map(s => `
@@ -322,21 +341,20 @@ async function loadShowcase() {
   }
 }
 
-document.querySelectorAll('.nav-item').forEach(b => {
-  b.onclick = async () => {
-    const n = b.dataset.nav;
-    if (['her', 'him', 'couple'].includes(n)) navCategory(n);
-    else if (n === 'profileScreen') {
-      await loadMe();
-      show(n);
-    } else show(n);
-  };
+// === ОБРАБОТЧИКИ КНОПОК ===
+
+// Три карточки-меню
+document.querySelectorAll('.menu-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const nav = card.dataset.nav;
+    if (nav === 'her' || nav === 'him' || nav === 'couple') {
+      navCategory(nav);
+    }
+  });
 });
 
-const startBtn = $('startBtn');
-if (startBtn) startBtn.onclick = () => show('uploadScreen');
-
-const profileBtn = $('profileBtn');
+// Аватарка → профиль
+const profileBtn = document.getElementById('profileBtn');
 if (profileBtn) {
   profileBtn.onclick = async () => {
     await loadMe();
@@ -344,15 +362,31 @@ if (profileBtn) {
   };
 }
 
+// Кнопка "Создать фото" на главной
+const startBtn = $('startBtn');
+if (startBtn) startBtn.onclick = () => show('uploadScreen');
+
+// Назад из категории
+const categoryBackBtn = document.getElementById('categoryBackBtn');
+if (categoryBackBtn) {
+  categoryBackBtn.addEventListener('click', () => show('homeScreen'));
+}
+
+// Назад из загрузки
 const backBtn = $('backBtn');
 if (backBtn) backBtn.onclick = () => show('homeScreen');
 
+// Назад из выбора стиля
 const styleBackBtn = $('styleBackBtn');
 if (styleBackBtn) styleBackBtn.onclick = () => show('uploadScreen');
 
+// Назад из профиля
 const profileBackBtn = $('profileBackBtn');
-if (profileBackBtn) profileBackBtn.addEventListener('click', () => show('homeScreen'));
+if (profileBackBtn) {
+  profileBackBtn.addEventListener('click', () => show('homeScreen'));
+}
 
+// Назад из админки
 const adminBackBtn = $('adminBackBtn');
 if (adminBackBtn) {
   adminBackBtn.onclick = () => {
@@ -361,6 +395,7 @@ if (adminBackBtn) {
   };
 }
 
+// Загрузка фото
 const photoInput = $('photoInput');
 if (photoInput) {
   photoInput.onchange = e => {
@@ -374,9 +409,11 @@ if (photoInput) {
   };
 }
 
+// Продолжить после загрузки фото
 const continueBtn = $('continueBtn');
 if (continueBtn) continueBtn.onclick = () => show('styleScreen');
 
+// Генерация
 const generateBtn = $('generateBtn');
 if (generateBtn) {
   generateBtn.onclick = async () => {
@@ -396,6 +433,7 @@ if (generateBtn) {
   };
 }
 
+// Пополнение баланса
 const topupBtn = $('topupBtn');
 if (topupBtn) {
   topupBtn.onclick = async () => {
@@ -414,6 +452,7 @@ if (topupBtn) {
   };
 }
 
+// Админка
 const adminBtn = $('adminBtn');
 if (adminBtn) adminBtn.onclick = loadAdmin;
 
