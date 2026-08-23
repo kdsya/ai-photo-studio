@@ -6,30 +6,10 @@ if (tg) {
   tg.setBackgroundColor?.('#09090b');
 }
 
-// === АВАТАРКА ===
-function updateProfileAvatar() {
-  const avatarImg = document.getElementById('profileAvatar');
-  const initialSpan = document.getElementById('profileInitial');
-  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-    const user = tg.initDataUnsafe.user;
-    if (user.photo_url) {
-      avatarImg.src = user.photo_url;
-      avatarImg.style.display = 'block';
-      initialSpan.style.display = 'none';
-    } else {
-      const firstName = user.first_name || 'П';
-      initialSpan.textContent = firstName.charAt(0).toUpperCase();
-      initialSpan.style.display = 'block';
-      avatarImg.style.display = 'none';
-    }
-  }
-}
-updateProfileAvatar();
-
 const $ = id => document.getElementById(id);
 const screens = ['homeScreen','categoryScreen','uploadScreen','styleScreen','profileScreen','adminScreen'];
 let currentStyle = null, selectedFile1 = null, selectedFile2 = null, me = null, allStyles = [], category = 'her';
-let currentCategory = ''; // 'Девушки', 'Парни', 'Пары'
+let currentCategory = '';
 let selectedStyle = null;
 const initData = tg?.initData || '';
 const unsafeUser = tg?.initDataUnsafe?.user || {};
@@ -55,7 +35,9 @@ function demoApi(path, options = {}) {
   const st = demoState();
   const method = (options.method || 'GET').toUpperCase();
   const u = unsafeUser;
+  
   if (path === '/api/showcase') return st.styles.filter(x => x.is_active);
+  
   if (path === '/api/me') {
     const user = {
       id: u.id || 'demo',
@@ -73,6 +55,7 @@ function demoApi(path, options = {}) {
       isAdmin: localAdmin
     };
   }
+  
   if (path === '/api/admin/overview') {
     if (!localAdmin) throw new Error('Admin access denied');
     return {
@@ -82,18 +65,22 @@ function demoApi(path, options = {}) {
       activeShowcase: st.styles.filter(x => x.is_active).length
     };
   }
+  
   if (path === '/api/admin/settings' && method === 'GET') {
     if (!localAdmin) throw new Error('Admin access denied');
     return { freeGenerationLimit: st.freeLimit ?? 1 };
   }
+  
   if (path === '/api/admin/users') {
     if (!localAdmin) throw new Error('Admin access denied');
     return st.users;
   }
+  
   if (path === '/api/admin/showcase') {
     if (!localAdmin) throw new Error('Admin access denied');
     return st.styles;
   }
+  
   if (path === '/api/admin/settings' && method === 'PATCH') {
     if (!localAdmin) throw new Error('Admin access denied');
     const body = JSON.parse(options.body || '{}');
@@ -101,6 +88,7 @@ function demoApi(path, options = {}) {
     saveDemo(st);
     return { ok: true };
   }
+  
   if (path === '/api/credits/topup' && method === 'POST') {
     const body = JSON.parse(options.body || '{}');
     const n = Number(body.credits || 0);
@@ -109,6 +97,7 @@ function demoApi(path, options = {}) {
     saveDemo(st);
     return { ok: true };
   }
+  
   if (path === '/api/generations' && method === 'POST') {
     const body = options.body;
     const style = st.styles.find(x => x.id === Number(body.get('showcaseStyleId')));
@@ -121,6 +110,7 @@ function demoApi(path, options = {}) {
     saveDemo(st);
     return { ok: true, message: '✅ Демо-генерация поставлена в очередь' };
   }
+  
   const m = path.match(/^\/api\/admin\/users\/(\d+)\/credits$/);
   if (m && method === 'POST') {
     if (!localAdmin) throw new Error('Admin access denied');
@@ -131,12 +121,14 @@ function demoApi(path, options = {}) {
     saveDemo(st);
     return { ok: true };
   }
+  
   const rf = path.match(/^\/api\/admin\/users\/(\d+)\/reset-free$/);
   if (rf && method === 'POST') {
     if (!localAdmin) throw new Error('Admin access denied');
     saveDemo(st);
     return { ok: true };
   }
+  
   const ts = path.match(/^\/api\/admin\/showcase\/(\d+)$/);
   if (ts && method === 'PATCH') {
     if (!localAdmin) throw new Error('Admin access denied');
@@ -146,6 +138,7 @@ function demoApi(path, options = {}) {
     saveDemo(st);
     return { ok: true };
   }
+  
   if (path === '/api/admin/showcase' && method === 'POST') {
     if (!localAdmin) throw new Error('Admin access denied');
     const fd = options.body;
@@ -164,6 +157,7 @@ function demoApi(path, options = {}) {
     saveDemo(st);
     return { ok: true, id: s.id };
   }
+  
   throw new Error('API недоступен в GitHub Pages');
 }
 
@@ -183,13 +177,15 @@ const api = async (path, options = {}) => {
 };
 
 function show(id) {
-  screens.forEach(x => $(x).classList.add('hidden'));
+  screens.forEach(x => {
+    const el = $(x);
+    if (el) el.classList.add('hidden');
+  });
   const el = $(id);
   if (el) el.classList.remove('hidden');
   window.scrollTo(0, 0);
 }
 
-// === НАВИГАЦИЯ ПО КАТЕГОРИЯМ ===
 function navCategory(c) {
   category = c;
   const map = {
@@ -235,12 +231,10 @@ function renderCards(rows, target) {
 function selectStyle(id) {
   currentStyle = allStyles.find(x => x.id === id);
   selectedStyle = currentStyle;
-  // Сохраняем выбранный стиль и переходим к загрузке фото
   updateUploadScreen();
   show('uploadScreen');
 }
 
-// === ЗАГРУЗКА ФОТО ===
 function updateUploadScreen() {
   const label1 = document.getElementById('uploadLabel1');
   const label2 = document.getElementById('uploadLabel2');
@@ -248,29 +242,33 @@ function updateUploadScreen() {
   const text1 = document.getElementById('uploadText1');
   const text2 = document.getElementById('uploadText2');
   
-  // Сбрасываем
   selectedFile1 = null;
   selectedFile2 = null;
-  document.getElementById('photoPreview1').classList.add('hidden');
-  document.getElementById('photoPreview2').classList.add('hidden');
-  document.getElementById('continueBtn').classList.add('disabled');
   
-  // В зависимости от категории
+  const preview1 = document.getElementById('photoPreview1');
+  const preview2 = document.getElementById('photoPreview2');
+  const continueBtn = document.getElementById('continueBtn');
+  
+  if (preview1) preview1.classList.add('hidden');
+  if (preview2) preview2.classList.add('hidden');
+  if (continueBtn) continueBtn.classList.add('disabled');
+  
   if (currentCategory === 'Пары') {
-    label2.classList.remove('hidden');
-    hint.textContent = 'Загрузи две фотографии: парня и девушки. Лица должны быть хорошо видны.';
-    text1.textContent = '📸 Фото девушки';
-    text2.textContent = '📸 Фото парня';
+    if (label2) label2.classList.remove('hidden');
+    if (hint) hint.textContent = 'Загрузи две фотографии: парня и девушки. Лица должны быть хорошо видны.';
+    if (text1) text1.textContent = '📸 Фото девушки';
+    if (text2) text2.textContent = '📸 Фото парня';
   } else {
-    label2.classList.add('hidden');
-    hint.textContent = 'Загрузи одну чёткую фотографию. Лицо должно быть хорошо видно.';
-    text1.textContent = '📸 Загрузить фото';
-    text2.textContent = '';
+    if (label2) label2.classList.add('hidden');
+    if (hint) hint.textContent = 'Загрузи одну чёткую фотографию. Лицо должно быть хорошо видно.';
+    if (text1) text1.textContent = '📸 Загрузить фото';
+    if (text2) text2.textContent = '';
   }
 }
 
 function checkContinueEnabled() {
   const continueBtn = document.getElementById('continueBtn');
+  if (!continueBtn) return;
   if (currentCategory === 'Пары') {
     if (selectedFile1 && selectedFile2) continueBtn.classList.remove('disabled');
     else continueBtn.classList.add('disabled');
@@ -327,7 +325,6 @@ async function loadShowcase() {
         currentStyle = allStyles.find(x => x.id == b.dataset.id);
         stylesEl.querySelectorAll('.style').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
-        // Переходим к загрузке фото после выбора стиля
         selectedStyle = currentStyle;
         updateUploadScreen();
         show('uploadScreen');
@@ -338,7 +335,6 @@ async function loadShowcase() {
 
 // === ОБРАБОТЧИКИ ===
 
-// ТРИ КАРТОЧКИ НА ГЛАВНОЙ
 document.querySelectorAll('.hero-card[data-nav]').forEach(card => {
   card.addEventListener('click', function() {
     const nav = this.dataset.nav;
@@ -350,28 +346,19 @@ document.querySelectorAll('.hero-card[data-nav]').forEach(card => {
   });
 });
 
-// КНОПКА "СОЗДАТЬ ФОТО" — ведёт сразу на выбор стиля
 const startBtn = $('startBtn');
 if (startBtn) {
   startBtn.onclick = () => {
-    // Если уже есть категория, показываем её стили
     if (currentCategory) {
-      // Показываем категорию
-      const categoryMap = {
-        'Девушки': 'her',
-        'Парни': 'him',
-        'Пары': 'couple'
-      };
+      const categoryMap = { 'Девушки': 'her', 'Парни': 'him', 'Пары': 'couple' };
       const catKey = categoryMap[currentCategory] || 'her';
       navCategory(catKey);
     } else {
-      // Если нет категории, показываем Девушки по умолчанию
       navCategory('her');
     }
   };
 }
 
-// АВАТАРКА → ПРОФИЛЬ
 const profileBtn = document.getElementById('profileBtn');
 if (profileBtn) {
   profileBtn.addEventListener('click', async () => {
@@ -380,21 +367,17 @@ if (profileBtn) {
   });
 }
 
-// КНОПКИ НАЗАД
 const categoryBackBtn = document.getElementById('categoryBackBtn');
 if (categoryBackBtn) categoryBackBtn.addEventListener('click', () => show('homeScreen'));
 
 const uploadBackBtn = document.getElementById('uploadBackBtn');
-if (uploadBackBtn) uploadBackBtn.addEventListener('click', () => {
-  // Возвращаемся к выбору стиля
-  const categoryMap = {
-    'Девушки': 'her',
-    'Парни': 'him',
-    'Пары': 'couple'
-  };
-  const catKey = categoryMap[currentCategory] || 'her';
-  navCategory(catKey);
-});
+if (uploadBackBtn) {
+  uploadBackBtn.addEventListener('click', () => {
+    const categoryMap = { 'Девушки': 'her', 'Парни': 'him', 'Пары': 'couple' };
+    const catKey = categoryMap[currentCategory] || 'her';
+    navCategory(catKey);
+  });
+}
 
 const profileBackBtn = $('profileBackBtn');
 if (profileBackBtn) profileBackBtn.addEventListener('click', () => show('homeScreen'));
@@ -402,7 +385,6 @@ if (profileBackBtn) profileBackBtn.addEventListener('click', () => show('homeScr
 const adminBackBtn = $('adminBackBtn');
 if (adminBackBtn) adminBackBtn.onclick = () => { loadMe(); show('profileScreen'); };
 
-// ЗАГРУЗКА ФОТО 1
 const photoInput1 = document.getElementById('photoInput1');
 if (photoInput1) {
   photoInput1.onchange = e => {
@@ -416,7 +398,6 @@ if (photoInput1) {
   };
 }
 
-// ЗАГРУЗКА ФОТО 2 (только для пар)
 const photoInput2 = document.getElementById('photoInput2');
 if (photoInput2) {
   photoInput2.onchange = e => {
@@ -430,20 +411,17 @@ if (photoInput2) {
   };
 }
 
-// КНОПКА "ПРОДОЛЖИТЬ" → генерация
 const continueBtn = $('continueBtn');
 if (continueBtn) {
   continueBtn.onclick = async () => {
     if (!selectedStyle) return alert('Ошибка: стиль не выбран');
     
-    // Проверяем загрузку фото
     if (currentCategory === 'Пары') {
       if (!selectedFile1 || !selectedFile2) return alert('Загрузи обе фотографии');
     } else {
       if (!selectedFile1) return alert('Загрузи фотографию');
     }
     
-    // Отправляем на генерацию
     const formData = new FormData();
     formData.append('showcaseStyleId', selectedStyle.id);
     formData.append('category', currentCategory);
@@ -469,7 +447,6 @@ if (continueBtn) {
   };
 }
 
-// ПОПОЛНЕНИЕ БАЛАНСА
 const topupBtn = $('topupBtn');
 if (topupBtn) {
   topupBtn.onclick = async () => {
@@ -488,7 +465,6 @@ if (topupBtn) {
   };
 }
 
-// АДМИНКА
 const adminBtn = $('adminBtn');
 if (adminBtn) adminBtn.onclick = loadAdmin;
 
