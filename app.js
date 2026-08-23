@@ -203,7 +203,6 @@ function navCategory(c) {
     $('categoryDesc').textContent = m[2];
   }
   
-  // Сохраняем категорию для экрана загрузки
   const categoryNames = {
     her: 'Девушки',
     him: 'Парни',
@@ -211,7 +210,6 @@ function navCategory(c) {
   };
   currentCategory = categoryNames[c] || '';
   
-  // Фильтруем по полю category
   let rows = [];
   if (c === 'her') rows = allStyles.filter(s => s.category === 'Девушки');
   else if (c === 'him') rows = allStyles.filter(s => s.category === 'Парни');
@@ -344,19 +342,19 @@ async function loadShowcase() {
 
 // === ОБРАБОТЧИКИ ===
 
-// Карточки на главной
+// КЛИК ПО ТРЁМ КАРТОЧКАМ
 document.querySelectorAll('.hero-card[data-nav]').forEach(card => {
   card.addEventListener('click', function() {
     const nav = this.dataset.nav;
     this.style.transform = 'scale(0.95)';
     setTimeout(() => { this.style.transform = ''; }, 150);
     if (nav === 'her') navCategory('her');
-    else if (nav === 'couple') navCategory('couple');
     else if (nav === 'him') navCategory('him');
+    else if (nav === 'couple') navCategory('couple');
   });
 });
 
-// Кнопка "Создать фото"
+// КНОПКА "СОЗДАТЬ ФОТО"
 const startBtn = $('startBtn');
 if (startBtn) startBtn.onclick = () => {
   if (!currentCategory) currentCategory = 'Девушки';
@@ -364,16 +362,16 @@ if (startBtn) startBtn.onclick = () => {
   show('uploadScreen');
 };
 
-// Аватарка → профиль
+// АВАТАРКА → ПРОФИЛЬ
 const profileBtn = document.getElementById('profileBtn');
 if (profileBtn) {
-  profileBtn.onclick = async () => {
+  profileBtn.addEventListener('click', async () => {
     await loadMe();
     show('profileScreen');
-  };
+  });
 }
 
-// Назад
+// КНОПКА НАЗАД
 const categoryBackBtn = document.getElementById('categoryBackBtn');
 if (categoryBackBtn) categoryBackBtn.addEventListener('click', () => show('homeScreen'));
 
@@ -389,7 +387,7 @@ if (profileBackBtn) profileBackBtn.addEventListener('click', () => show('homeScr
 const adminBackBtn = $('adminBackBtn');
 if (adminBackBtn) adminBackBtn.onclick = () => { loadMe(); show('profileScreen'); };
 
-// Загрузка фото
+// ЗАГРУЗКА ФОТО
 const photoInput1 = document.getElementById('photoInput1');
 if (photoInput1) {
   photoInput1.onchange = e => {
@@ -419,7 +417,7 @@ if (photoInput2) {
 const continueBtn = $('continueBtn');
 if (continueBtn) continueBtn.onclick = () => show('styleScreen');
 
-// Генерация
+// ГЕНЕРАЦИЯ
 const generateBtn = $('generateBtn');
 if (generateBtn) {
   generateBtn.onclick = async () => {
@@ -448,7 +446,7 @@ if (generateBtn) {
   };
 }
 
-// Пополнение баланса
+// ПОПОЛНЕНИЕ БАЛАНСА
 const topupBtn = $('topupBtn');
 if (topupBtn) {
   topupBtn.onclick = async () => {
@@ -467,7 +465,7 @@ if (topupBtn) {
   };
 }
 
-// Админка
+// АДМИНКА
 const adminBtn = $('adminBtn');
 if (adminBtn) adminBtn.onclick = loadAdmin;
 
@@ -559,3 +557,59 @@ window.toggleStyle = async (id, v) => {
 const showcaseForm = $('showcaseForm');
 if (showcaseForm) {
   showcaseForm.onsubmit = async e => {
+    e.preventDefault();
+    try {
+      await api('/api/admin/showcase', {
+        method: 'POST',
+        body: new FormData(e.target)
+      });
+      e.target.reset();
+      await renderAdminShowcase();
+      await loadShowcase();
+    } catch (x) {
+      alert(x.message);
+    }
+  };
+}
+
+const saveSettings = $('saveSettings');
+if (saveSettings) {
+  saveSettings.onclick = async () => {
+    try {
+      await api('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freeGenerationLimit: Number($('freeLimitInput').value) })
+      });
+      alert('Сохранено');
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+}
+
+const userSearch = $('userSearch');
+if (userSearch) userSearch.oninput = () => renderAdminUsers();
+
+const refreshAdmin = $('refreshAdmin');
+if (refreshAdmin) refreshAdmin.onclick = loadAdmin;
+
+document.querySelectorAll('.admin-tabs button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.admin-tabs button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    ['users','showcase','settings'].forEach(x => $(`admin${x[0].toUpperCase()+x.slice(1)}Tab`).classList.add('hidden'));
+    $(`admin${b.dataset.atab[0].toUpperCase()+b.dataset.atab.slice(1)}Tab`).classList.remove('hidden');
+  };
+});
+
+(async () => {
+  try {
+    await loadShowcase();
+    if (localAdmin && tg?.initData) {
+      setTimeout(() => loadMe().then(() => loadAdmin()), 350);
+    }
+  } catch (e) {
+    console.error('Startup error:', e);
+  }
+})();
