@@ -10,7 +10,13 @@
 <body>
 <main class="app">
   <section id="homeScreen" class="screen home">
-    <header class="topbar"><div class="brand"><span class="brand-mark">✦</span><span>PHOTO<span>AI</span></span></div><button class="icon-btn" id="profileBtn" aria-label="Профиль">○</button></header>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✦</span><span>PHOTO<span>AI</span></span></div>
+      <button class="icon-btn" id="profileBtn" aria-label="Профиль">
+        <img id="profileAvatar" src="" alt="Аватар" style="width:38px; height:38px; border-radius:50%; object-fit:cover; display:none;">
+        <span id="profileInitial" style="display:block; font-size:20px; line-height:38px;">○</span>
+      </button>
+    </header>
     <div class="hero-copy"><div class="eyebrow">AI PHOTO STUDIO</div><h1>Твоя лучшая<br><em>версия.</em></h1><p>Один снимок. Новый образ. Выбирай готовую сцену — остальное сделает AI.</p></div>
     <div class="hero-stack"><div class="hero-card back-card"><span>HER</span></div><div class="hero-card main-card"><div class="shine"></div><span>YOUR<br>NEXT LOOK</span><small>PHOTOAI</small></div><div class="hero-card front-card"><span>COUPLE</span></div></div>
     <div class="free-pill"><b>1</b><span>бесплатная генерация<br><small>для нового пользователя</small></span></div>
