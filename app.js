@@ -1,6 +1,31 @@
 const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
+  // === АВАТАРКА ===
+function updateProfileAvatar() {
+  const avatarImg = document.getElementById('profileAvatar');
+  const initialSpan = document.getElementById('profileInitial');
+  
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    const user = tg.initDataUnsafe.user;
+    
+    if (user.photo_url) {
+      avatarImg.src = user.photo_url;
+      avatarImg.style.display = 'block';
+      if (initialSpan) initialSpan.style.display = 'none';
+    } else {
+      const firstName = user.first_name || 'П';
+      if (initialSpan) {
+        initialSpan.textContent = firstName.charAt(0).toUpperCase();
+        initialSpan.style.display = 'block';
+      }
+      if (avatarImg) avatarImg.style.display = 'none';
+    }
+  }
+}
+
+// Вызываем при загрузке
+updateProfileAvatar();
   tg.expand();
   tg.setHeaderColor?.('#09090b');
   tg.setBackgroundColor?.('#09090b');
