@@ -6,6 +6,29 @@ if (tg) {
   tg.setBackgroundColor?.('#09090b');
 }
 
+// === АВАТАРКА В ШАПКЕ ===
+function updateProfileAvatar() {
+  const avatarImg = document.getElementById('profileAvatar');
+  const initialSpan = document.getElementById('profileInitial');
+  
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    const user = tg.initDataUnsafe.user;
+    
+    if (user.photo_url) {
+      avatarImg.src = user.photo_url;
+      avatarImg.style.display = 'block';
+      initialSpan.style.display = 'none';
+    } else {
+      const firstName = user.first_name || 'П';
+      initialSpan.textContent = firstName.charAt(0).toUpperCase();
+      initialSpan.style.display = 'block';
+      avatarImg.style.display = 'none';
+    }
+  }
+}
+
+updateProfileAvatar();
+
 const $ = id => document.getElementById(id);
 const screens = ['homeScreen','categoryScreen','uploadScreen','styleScreen','profileScreen','adminScreen'];
 let currentStyle = null, selectedFile = null, me = null, allStyles = [], category = 'her';
@@ -15,12 +38,12 @@ const localAdmin = String(unsafeUser.username || '').toLowerCase() === 'tgfsb';
 
 const DEMO_KEY = 'photoai_demo_v3';
 const demoStyles = [
-  {id:1, title:'Luxury', category:'Для неё', description:'Премиальный образ', price_credits:3, preview_images:[], is_active:1, is_popular:1},
-  {id:2, title:'Business', category:'Для него', description:'Деловой образ', price_credits:2, preview_images:[], is_active:1, is_popular:0},
-  {id:3, title:'Cinematic', category:'Все', description:'Кадр как из фильма', price_credits:3, preview_images:[], is_active:1, is_popular:1},
-  {id:4, title:'Fitness', category:'Для него', description:'Спортивная атмосфера', price_credits:2, preview_images:[], is_active:1, is_popular:0},
-  {id:5, title:'Instagram', category:'Для неё', description:'Стиль для соцсетей', price_credits:2, preview_images:[], is_active:1, is_popular:1},
-  {id:6, title:'Парная фотосессия ❤️', category:'Пары', description:'Совместные кадры', price_credits:4, preview_images:[], is_active:1, is_popular:1}
+  {id:1, title:'Элегантный портрет', category:'Для неё', description:'Изысканный кадр', price_credits:3, preview_images:[], is_active:1, is_popular:1},
+  {id:2, title:'Деловой образ', category:'Для него', description:'Уверенный стиль', price_credits:3, preview_images:[], is_active:1, is_popular:1},
+  {id:3, title:'Романтический', category:'Пары', description:'Нежные объятия', price_credits:4, preview_images:[], is_active:1, is_popular:1},
+  {id:4, title:'Кинокадр', category:'Все', description:'Как из фильма', price_credits:3, preview_images:[], is_active:1, is_popular:1},
+  {id:5, title:'Аниме-портрет', category:'Все', description:'Твой образ в аниме', price_credits:3, preview_images:[], is_active:1, is_popular:1},
+  {id:6, title:'Спортивный', category:'Для него', description:'Энергия и драйв', price_credits:3, preview_images:[], is_active:1, is_popular:0}
 ];
 
 function demoState() {
@@ -113,7 +136,7 @@ function demoApi(path, options = {}) {
     else throw new Error('Not enough credits');
     st.history.unshift({ style_title: style.title, status: 'queued', credits_spent: useFree ? 0 : style.price_credits });
     saveDemo(st);
-    return { ok: true, message: 'Демо-генерация поставлена в очередь. Для реального AI подключите бэкенд.' };
+    return { ok: true, message: 'Демо-генерация поставлена в очередь' };
   }
   
   const m = path.match(/^\/api\/admin\/users\/(\d+)\/credits$/);
@@ -163,7 +186,7 @@ function demoApi(path, options = {}) {
     return { ok: true, id: s.id };
   }
   
-  throw new Error('API недоступен в GitHub Pages. Для полного режима запустите Node-бэкенд.');
+  throw new Error('API недоступен в GitHub Pages');
 }
 
 const api = async (path, options = {}) => {
@@ -183,7 +206,8 @@ const api = async (path, options = {}) => {
 
 function show(id) {
   screens.forEach(x => $(x).classList.add('hidden'));
-  $(id).classList.remove('hidden');
+  const el = $(id);
+  if (el) el.classList.remove('hidden');
   window.scrollTo(0, 0);
   document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
   const n = document.querySelector(`.nav-item[data-nav="${id}"]`);
@@ -198,9 +222,11 @@ function navCategory(c) {
     couple: ['Парные', 'КОЛЛЕКЦИЯ ДЛЯ ДВОИХ', 'Совместные кадры — романтика, lifestyle и кино.']
   };
   const m = map[c];
-  $('categoryTitle').textContent = m[0];
-  $('categoryEyebrow').textContent = m[1];
-  $('categoryDesc').textContent = m[2];
+  if (m) {
+    $('categoryTitle').textContent = m[0];
+    $('categoryEyebrow').textContent = m[1];
+    $('categoryDesc').textContent = m[2];
+  }
   const words = c === 'her' ? ['девуш','женск','her','instagram','beauty','fashion','luxury'] :
                  c === 'him' ? ['парн','муж','him','business','fitness','gaming','travel'] :
                  ['пар','couple','для двоих'];
@@ -210,6 +236,7 @@ function navCategory(c) {
 }
 
 function renderCards(rows, target) {
+  if (!target) return;
   target.innerHTML = rows.length ? rows.map(s => `
     <button class="showcase-item" data-id="${s.id}">
       <div class="showcase-image">${s.preview_images?.[0] ? `<img src="${s.preview_images[0]}" alt="">` : '✦'}</div>
@@ -222,16 +249,18 @@ function renderCards(rows, target) {
 
 function selectStyle(id) {
   currentStyle = allStyles.find(x => x.id === id);
-  $('styles').innerHTML = allStyles.map(s => `
+  const stylesEl = $('styles');
+  if (!stylesEl) return;
+  stylesEl.innerHTML = allStyles.map(s => `
     <button class="style ${currentStyle?.id === s.id ? 'active' : ''}" data-id="${s.id}">
       <span>${s.is_popular ? '🔥 ' : ''}${s.title}</span>
       <small>${s.price_credits}💎 · ${s.category}</small>
     </button>
   `).join('');
-  $('styles').querySelectorAll('[data-id]').forEach(b => {
+  stylesEl.querySelectorAll('[data-id]').forEach(b => {
     b.onclick = () => {
       currentStyle = allStyles.find(x => x.id == b.dataset.id);
-      $('styles').querySelectorAll('.style').forEach(x => x.classList.remove('active'));
+      stylesEl.querySelectorAll('.style').forEach(x => x.classList.remove('active'));
       b.classList.add('active');
     };
   });
@@ -248,8 +277,10 @@ async function loadMe() {
     renderHistory(me);
     
     const isAdmin = me.isAdmin === true || localAdmin;
-    $('adminLinkWrap').classList.toggle('hidden', !isAdmin);
+    const adminLink = $('adminLinkWrap');
+    if (adminLink) adminLink.classList.toggle('hidden', !isAdmin);
   } catch (e) {
+    console.error('LoadMe error:', e);
     $('profileName').textContent = 'Открой из Telegram';
     $('freeInfo').textContent = 'Авторизация доступна только внутри Telegram Mini App';
   }
@@ -273,19 +304,22 @@ function renderHistory(x) {
 async function loadShowcase() {
   allStyles = await api('/api/showcase');
   renderCards(allStyles.slice(0, 6), $('showcase'));
-  $('styles').innerHTML = allStyles.map(s => `
-    <button class="style" data-id="${s.id}">
-      <span>${s.is_popular ? '🔥 ' : ''}${s.title}</span>
-      <small>${s.price_credits}💎 · ${s.category}</small>
-    </button>
-  `).join('');
-  $('styles').querySelectorAll('[data-id]').forEach(b => {
-    b.onclick = () => {
-      currentStyle = allStyles.find(x => x.id == b.dataset.id);
-      $('styles').querySelectorAll('.style').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-    };
-  });
+  const stylesEl = $('styles');
+  if (stylesEl) {
+    stylesEl.innerHTML = allStyles.map(s => `
+      <button class="style" data-id="${s.id}">
+        <span>${s.is_popular ? '🔥 ' : ''}${s.title}</span>
+        <small>${s.price_credits}💎 · ${s.category}</small>
+      </button>
+    `).join('');
+    stylesEl.querySelectorAll('[data-id]').forEach(b => {
+      b.onclick = () => {
+        currentStyle = allStyles.find(x => x.id == b.dataset.id);
+        stylesEl.querySelectorAll('.style').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      };
+    });
+  }
 }
 
 document.querySelectorAll('.nav-item').forEach(b => {
@@ -299,63 +333,89 @@ document.querySelectorAll('.nav-item').forEach(b => {
   };
 });
 
-$('startBtn').onclick = () => show('uploadScreen');
-$('profileBtn').onclick = async () => {
-  await loadMe();
-  show('profileScreen');
-};
-$('backBtn').onclick = () => show('homeScreen');
-$('styleBackBtn').onclick = () => show('uploadScreen');
-$('profileBackBtn')?.addEventListener('click', () => show('homeScreen'));
-$('adminBackBtn').onclick = () => {
-  loadMe();
-  show('profileScreen');
-};
+const startBtn = $('startBtn');
+if (startBtn) startBtn.onclick = () => show('uploadScreen');
 
-$('photoInput').onchange = e => {
-  const f = e.target.files?.[0];
-  if (!f) return;
-  if (f.size > 10 * 1024 * 1024) return alert('Фото больше 10 МБ');
-  selectedFile = f;
-  $('previewImg').src = URL.createObjectURL(f);
-  $('photoPreview').classList.remove('hidden');
-  $('continueBtn').classList.remove('disabled');
-};
-
-$('continueBtn').onclick = () => show('styleScreen');
-
-$('generateBtn').onclick = async () => {
-  if (!currentStyle) return alert('Выбери образ');
-  try {
-    const result = await api('/api/generations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ showcaseStyleId: currentStyle.id, sourceImage: selectedFile?.name })
-    });
-    alert(result.message);
+const profileBtn = $('profileBtn');
+if (profileBtn) {
+  profileBtn.onclick = async () => {
     await loadMe();
     show('profileScreen');
-  } catch (e) {
-    alert(e.message === 'Not enough credits' ? 'Не хватает кредитов. Пополни баланс.' : e.message);
-  }
-};
+  };
+}
 
-$('topupBtn').onclick = async () => {
-  const n = prompt('Демо-пополнение. В продакшене подключаем Telegram Stars/платёжный провайдер. Кредитов:', '20');
-  if (!n) return;
-  try {
-    await api('/api/credits/topup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credits: Number(n) })
-    });
-    await loadMe();
-  } catch (e) {
-    alert(e.message);
-  }
-};
+const backBtn = $('backBtn');
+if (backBtn) backBtn.onclick = () => show('homeScreen');
 
-$('adminBtn').onclick = loadAdmin;
+const styleBackBtn = $('styleBackBtn');
+if (styleBackBtn) styleBackBtn.onclick = () => show('uploadScreen');
+
+const profileBackBtn = $('profileBackBtn');
+if (profileBackBtn) profileBackBtn.addEventListener('click', () => show('homeScreen'));
+
+const adminBackBtn = $('adminBackBtn');
+if (adminBackBtn) {
+  adminBackBtn.onclick = () => {
+    loadMe();
+    show('profileScreen');
+  };
+}
+
+const photoInput = $('photoInput');
+if (photoInput) {
+  photoInput.onchange = e => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 10 * 1024 * 1024) return alert('Фото больше 10 МБ');
+    selectedFile = f;
+    $('previewImg').src = URL.createObjectURL(f);
+    $('photoPreview').classList.remove('hidden');
+    $('continueBtn').classList.remove('disabled');
+  };
+}
+
+const continueBtn = $('continueBtn');
+if (continueBtn) continueBtn.onclick = () => show('styleScreen');
+
+const generateBtn = $('generateBtn');
+if (generateBtn) {
+  generateBtn.onclick = async () => {
+    if (!currentStyle) return alert('Выбери образ');
+    try {
+      const result = await api('/api/generations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showcaseStyleId: currentStyle.id, sourceImage: selectedFile?.name })
+      });
+      alert(result.message);
+      await loadMe();
+      show('profileScreen');
+    } catch (e) {
+      alert(e.message === 'Not enough credits' ? 'Не хватает кредитов. Пополни баланс.' : e.message);
+    }
+  };
+}
+
+const topupBtn = $('topupBtn');
+if (topupBtn) {
+  topupBtn.onclick = async () => {
+    const n = prompt('Демо-пополнение. Кредитов:', '20');
+    if (!n) return;
+    try {
+      await api('/api/credits/topup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credits: Number(n) })
+      });
+      await loadMe();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+}
+
+const adminBtn = $('adminBtn');
+if (adminBtn) adminBtn.onclick = loadAdmin;
 
 async function loadAdmin() {
   try {
@@ -442,36 +502,45 @@ window.toggleStyle = async (id, v) => {
   }
 };
 
-$('showcaseForm').onsubmit = async e => {
-  e.preventDefault();
-  try {
-    await api('/api/admin/showcase', {
-      method: 'POST',
-      body: new FormData(e.target)
-    });
-    e.target.reset();
-    await renderAdminShowcase();
-    await loadShowcase();
-  } catch (x) {
-    alert(x.message);
-  }
-};
+const showcaseForm = $('showcaseForm');
+if (showcaseForm) {
+  showcaseForm.onsubmit = async e => {
+    e.preventDefault();
+    try {
+      await api('/api/admin/showcase', {
+        method: 'POST',
+        body: new FormData(e.target)
+      });
+      e.target.reset();
+      await renderAdminShowcase();
+      await loadShowcase();
+    } catch (x) {
+      alert(x.message);
+    }
+  };
+}
 
-$('saveSettings').onclick = async () => {
-  try {
-    await api('/api/admin/settings', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ freeGenerationLimit: Number($('freeLimitInput').value) })
-    });
-    alert('Сохранено');
-  } catch (e) {
-    alert(e.message);
-  }
-};
+const saveSettings = $('saveSettings');
+if (saveSettings) {
+  saveSettings.onclick = async () => {
+    try {
+      await api('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freeGenerationLimit: Number($('freeLimitInput').value) })
+      });
+      alert('Сохранено');
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+}
 
-$('userSearch').oninput = () => renderAdminUsers();
-$('refreshAdmin').onclick = loadAdmin;
+const userSearch = $('userSearch');
+if (userSearch) userSearch.oninput = () => renderAdminUsers();
+
+const refreshAdmin = $('refreshAdmin');
+if (refreshAdmin) refreshAdmin.onclick = loadAdmin;
 
 document.querySelectorAll('.admin-tabs button').forEach(b => {
   b.onclick = () => {
@@ -489,6 +558,6 @@ document.querySelectorAll('.admin-tabs button').forEach(b => {
       setTimeout(() => loadMe().then(() => loadAdmin()), 350);
     }
   } catch (e) {
-    console.error(e);
+    console.error('Startup error:', e);
   }
 })();
