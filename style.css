@@ -385,3 +385,18 @@
     right: -5px;
   }
 }
+/* ЖЁСТКИЙ ФИКС — запрещаем любые движения */
+.hero-card.main-card {
+  transform: translateX(-50%) !important;
+  animation: none !important;
+}
+
+.hero-card.back-card {
+  transform: rotate(-8deg) !important;
+  animation: none !important;
+}
+
+.hero-card.front-card {
+  transform: rotate(8deg) !important;
+  animation: none !important;
+}
