@@ -17,16 +17,16 @@
         <span id="profileInitial" style="display:block; font-size:20px; line-height:38px;">○</span>
       </button>
     </header>
-    <div class="hero-copy"><div class="eyebrow">AI PHOTO STUDIO</div><h1>Твоя лучшая<br><em>версия.</em></h1><p>Один снимок. Новый образ. Выбирай готовую сцену — остальное сделает AI.</p></div>
-    <div class="hero-stack"><div class="hero-card back-card"><span>HER</span></div><div class="hero-card main-card"><div class="shine"></div><span>YOUR<br>NEXT LOOK</span><small>PHOTOAI</small></div><div class="hero-card front-card"><span>COUPLE</span></div></div>
+    <div class="hero-copy"><div class="eyebrow">AI ФОТОСТУДИЯ</div><h1>Твой стиль —<br><em>твоя история.</em></h1><p>Загрузи одно фото — получи целую фотосессию. Выбери стиль, а AI сделает остальное.</p></div>
+    <div class="hero-stack"><div class="hero-card back-card"><span>ДЕВУШКИ</span></div><div class="hero-card main-card"><div class="shine"></div><span>ФОТОСЕТ<br>ЗА 1 МИНУТУ</span><small>PHOTOAI</small></div><div class="hero-card front-card"><span>ПАРЫ</span></div></div>
     <div class="free-pill"><b>1</b><span>бесплатная генерация<br><small>для нового пользователя</small></span></div>
     <button class="primary hero-cta" id="startBtn">Создать фото <span>→</span></button>
-    <div class="section-head"><div><small>ПОПУЛЯРНОЕ</small><h2>Выбери настроение</h2></div></div>
+    <div class="section-head"><div><small>ПОПУЛЯРНЫЕ СТИЛИ</small><h2>Выбери настроение</h2></div></div>
     <div class="showcase" id="showcase"></div>
   </section>
 
   <section class="screen hidden" id="categoryScreen">
-    <header class="page-head"><div><div class="eyebrow" id="categoryEyebrow">КОЛЛЕКЦИЯ</div><h2 id="categoryTitle">Для неё</h2></div></header>
+    <header class="page-head"><div><div class="eyebrow" id="categoryEyebrow">КОЛЛЕКЦИЯ</div><h2 id="categoryTitle">Девушки</h2></div></header>
     <p id="categoryDesc" class="muted">Готовые образы, которые хочется сохранить.</p>
     <div class="showcase" id="categoryShowcase"></div>
   </section>
@@ -56,7 +56,7 @@
 
   <section class="screen hidden" id="adminScreen">
     <button class="back" id="adminBackBtn">← Кабинет</button>
-    <div class="admin-title"><div><div class="step">CONTROL CENTER</div><h2>Управление</h2></div><span class="admin-badge">@tgfsb</span></div>
+    <div class="admin-title"><div><div class="step">УПРАВЛЕНИЕ</div><h2>Панель управления</h2></div><span class="admin-badge">@tgfsb</span></div>
     <div class="admin-grid" id="adminStats"></div>
     <div class="admin-tabs"><button class="active" data-atab="users">Пользователи</button><button data-atab="showcase">Витрина</button><button data-atab="settings">Настройки</button></div>
     <div id="adminUsersTab">
@@ -65,7 +65,7 @@
     </div>
     <div id="adminShowcaseTab" class="hidden">
       <form id="showcaseForm" class="admin-form" enctype="multipart/form-data">
-        <input name="title" placeholder="Название образа" required><input name="category" placeholder="Категория" value="Для неё">
+        <input name="title" placeholder="Название образа" required><input name="category" placeholder="Категория" value="Девушки">
         <textarea name="description" placeholder="Описание"></textarea><input name="priceCredits" type="number" min="0" value="2" placeholder="Цена в кредитах">
         <label class="check"><input name="isPopular" type="checkbox" value="1"> Популярный</label><input name="images" type="file" accept="image/*" multiple>
         <button class="primary">Добавить образ</button>
@@ -73,14 +73,14 @@
     </div>
     <div id="adminSettingsTab" class="hidden">
       <div class="setting-card"><div><b>Бесплатная генерация</b><span>Новые пользователи получают это количество попыток.</span></div><input id="freeLimitInput" type="number" min="0" max="20" value="1"><button class="secondary" id="saveSettings">Сохранить</button></div>
-      <div class="setting-card"><div><b>Администратор</b><span>Доступ закреплён за Telegram-аккаунтом <strong>@tgfsb</strong> через проверенные Telegram WebApp данные.</span></div></div>
+      <div class="setting-card"><div><b>Администратор</b><span>Доступ закреплён за Telegram-аккаунтом <strong>@tgfsb</strong>.</span></div></div>
     </div>
   </section>
 
   <nav class="bottom-nav" id="bottomNav">
     <button class="nav-item active" data-nav="homeScreen"><span class="nav-icon">⌂</span><small>Главная</small></button>
-    <button class="nav-item" data-nav="her"><span class="nav-icon">♀</span><small>Для неё</small></button>
-    <button class="nav-item" data-nav="him"><span class="nav-icon">♂</span><small>Для него</small></button>
+    <button class="nav-item" data-nav="her"><span class="nav-icon">♀</span><small>Девушки</small></button>
+    <button class="nav-item" data-nav="him"><span class="nav-icon">♂</span><small>Парни</small></button>
     <button class="nav-item" data-nav="couple"><span class="nav-icon">♡</span><small>Пары</small></button>
     <button class="nav-item" data-nav="profileScreen"><span class="nav-icon">○</span><small>Кабинет</small></button>
   </nav>
