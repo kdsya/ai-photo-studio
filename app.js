@@ -384,11 +384,8 @@ if (profileBtn) {
 const categoryBackBtn = document.getElementById('categoryBackBtn');
 if (categoryBackBtn) categoryBackBtn.addEventListener('click', () => show('homeScreen'));
 
-const backBtn = $('backBtn');
-if (backBtn) backBtn.onclick = () => show('homeScreen');
-
-const styleBackBtn = $('styleBackBtn');
-if (styleBackBtn) styleBackBtn.onclick = () => {
+const uploadBackBtn = document.getElementById('uploadBackBtn');
+if (uploadBackBtn) uploadBackBtn.addEventListener('click', () => {
   // Возвращаемся к выбору стиля
   const categoryMap = {
     'Девушки': 'her',
@@ -397,7 +394,7 @@ if (styleBackBtn) styleBackBtn.onclick = () => {
   };
   const catKey = categoryMap[currentCategory] || 'her';
   navCategory(catKey);
-};
+});
 
 const profileBackBtn = $('profileBackBtn');
 if (profileBackBtn) profileBackBtn.addEventListener('click', () => show('homeScreen'));
