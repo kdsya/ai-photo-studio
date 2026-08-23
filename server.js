@@ -12,6 +12,18 @@ const PORT=Number(process.env.PORT||3000); const ROOT=process.cwd();
 const UPLOAD_DIR=path.join(ROOT,'temp_uploads'); fs.mkdirSync(UPLOAD_DIR,{recursive:true});
 const supabase=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY);
 const bot=new TelegramBot(process.env.BOT_TOKEN||'',{polling:false});
+
+// GitHub Pages -> Render API: allow the Telegram Mini App frontend to call the server.
+app.use((req,res,next)=>{
+  const origin=req.headers.origin;
+  res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  res.setHeader('Vary','Origin');
+  res.setHeader('Access-Control-Allow-Methods','GET,POST,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers','Content-Type, X-Telegram-Init-Data');
+  res.setHeader('Access-Control-Max-Age','86400');
+  if(req.method==='OPTIONS') return res.sendStatus(204);
+  next();
+});
 app.use(express.json({limit:'2mb'})); app.use(express.urlencoded({extended:true})); app.use('/uploads',express.static(UPLOAD_DIR)); app.use(express.static(ROOT,{index:'index.html'}));
 const storage=multer.diskStorage({destination:(r,f,cb)=>cb(null,UPLOAD_DIR),filename:(r,f,cb)=>cb(null,`${Date.now()}-${Math.round(Math.random()*1e9)}${path.extname(f.originalname)}`)});
 const upload=multer({storage,limits:{fileSize:50*1024*1024}});
