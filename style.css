@@ -261,20 +261,28 @@
   }
 }
 
-/* Индивидуальные повороты для каждой карточки */
+/* ЖЁСТКИЙ ФИКС — возвращаем карточки на места */
 .hero-card.back-card {
-  --rotate: -6deg;
-  transform-origin: bottom left;
+  left: 2px !important;
+  top: 33px !important;
+  transform: rotate(-8deg) !important;
+  z-index: 1 !important;
 }
 
 .hero-card.main-card {
-  --rotate: 0deg;
-  transform-origin: center;
+  left: 50% !important;
+  top: 0 !important;
+  transform: translateX(-50%) !important;
+  z-index: 3 !important;
+  width: 190px !important;
+  height: 248px !important;
 }
 
 .hero-card.front-card {
-  --rotate: 6deg;
-  transform-origin: bottom right;
+  right: 0 !important;
+  bottom: 1px !important;
+  transform: rotate(8deg) !important;
+  z-index: 1 !important;
 }
 
 /* При наведении — усиливаем эффект */
@@ -286,7 +294,7 @@
 
 /* При клике — легкое сжатие */
 .hero-card:active {
-  transform: scale(0.95);
+  transform: scale(0.55);
   animation-play-state: paused;
 }
 /* === СТРЕЛКИ КАРУСЕЛИ === */
