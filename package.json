@@ -1,1 +1,1 @@
-{"name":"ai-photo-studio","version":"5.0.0","type":"module","scripts":{"start":"node server.js"},"dependencies":{"@supabase/supabase-js":"^2.57.4","dotenv":"^16.4.7","express":"^5.1.0","multer":"^2.0.2","node-telegram-bot-api":"^0.66.0"}}
+{"name":"ai-photo-studio","version":"9.0.0","type":"module","scripts":{"start":"node server.js"},"dependencies":{"@supabase/supabase-js":"^2.57.4","dotenv":"^16.4.7","express":"^5.1.0","multer":"^2.0.2","node-telegram-bot-api":"^0.66.0"}}
