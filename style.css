@@ -212,3 +212,22 @@
     font-size: 12px;
   }
 }
+/* Кликабельные карточки */
+.hero-card[data-nav] {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-card[data-nav]:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.hero-card[data-nav]:active {
+  transform: scale(0.95);
+}
+
+/* Аватарка кликабельна */
+.icon-btn {
+  cursor: pointer;
+}
