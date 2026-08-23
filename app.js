@@ -626,7 +626,201 @@ document.querySelectorAll('.admin-tabs button').forEach(b => {
     $(`admin${b.dataset.atab[0].toUpperCase()+b.dataset.atab.slice(1)}Tab`).classList.remove('hidden');
   };
 });
+// === УПРАВЛЕНИЕ КАРУСЕЛЬЮ ===
+let currentIndex = 0;
+const totalCards = 3;
 
+function goToCard(index) {
+  const container = document.getElementById('heroStack');
+  if (!container) return;
+  
+  const cards = container.querySelectorAll('.hero-card');
+  if (cards.length !== totalCards) return;
+  
+  // Нормализуем индекс
+  index = ((index % totalCards) + totalCards) % totalCards;
+  currentIndex = index;
+  
+  // Определяем, какая карточка куда должна встать
+  const positions = ['position-left', 'position-center', 'position-right'];
+  
+  cards.forEach((card, i) => {
+    // Вычисляем новую позицию с учётом сдвига
+    const newPos = ((i - index) % totalCards + totalCards) % totalCards;
+    card.className = 'hero-card transitioning';
+    card.classList.add(positions[newPos]);
+  });
+  
+  // Убираем класс transitioning после анимации
+  setTimeout(() => {
+    document.querySelectorAll('.hero-card.transitioning').forEach(card => {
+      card.classList.remove('transitioning');
+    });
+  }, 700);
+  
+  // Обновляем индикаторы
+  document.querySelectorAll('.dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === index);
+  });
+}
+
+function nextCard() {
+  goToCard(currentIndex + 1);
+}
+
+function prevCard() {
+  goToCard(currentIndex - 1);
+}
+
+// === ОБРАБОТЧИКИ ===
+const prevBtn = document.getElementById('carouselPrev');
+const nextBtn = document.getElementById('carouselNext');
+
+if (prevBtn) prevBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  prevCard();
+});
+
+if (nextBtn) nextBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  nextCard();
+});
+
+// Клик по индикаторам
+document.querySelectorAll('.dot').forEach(dot => {
+  dot.addEventListener('click', function() {
+    const index = parseInt(this.dataset.index);
+    goToCard(index);
+  });
+});
+
+// === СВАЙП НА КАРТОЧКАХ ===
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.querySelectorAll('.hero-card').forEach(card => {
+  card.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  
+  card.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 30) { // Минимальный свайп 30px
+      if (diff > 0) {
+        nextCard();
+      } else {
+        prevCard();
+      }
+    }
+  }, { passive: true });
+});
+// === УПРАВЛЕНИЕ КАРУСЕЛЬЮ ===
+let currentIndex = 0;
+const totalCards = 3;
+
+function goToCard(index) {
+  const container = document.getElementById('heroStack');
+  if (!container) return;
+  
+  const cards = container.querySelectorAll('.hero-card');
+  if (cards.length !== totalCards) return;
+  
+  // Нормализуем индекс
+  index = ((index % totalCards) + totalCards) % totalCards;
+  currentIndex = index;
+  
+  // Определяем, какая карточка куда должна встать
+  const positions = ['position-left', 'position-center', 'position-right'];
+  
+  cards.forEach((card, i) => {
+    // Вычисляем новую позицию с учётом сдвига
+    const newPos = ((i - index) % totalCards + totalCards) % totalCards;
+    card.className = 'hero-card transitioning';
+    card.classList.add(positions[newPos]);
+  });
+  
+  // Убираем класс transitioning после анимации
+  setTimeout(() => {
+    document.querySelectorAll('.hero-card.transitioning').forEach(card => {
+      card.classList.remove('transitioning');
+    });
+  }, 700);
+  
+  // Обновляем индикаторы
+  document.querySelectorAll('.dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === index);
+  });
+}
+
+function nextCard() {
+  goToCard(currentIndex + 1);
+}
+
+function prevCard() {
+  goToCard(currentIndex - 1);
+}
+
+// === ОБРАБОТЧИКИ ===
+const prevBtn = document.getElementById('carouselPrev');
+const nextBtn = document.getElementById('carouselNext');
+
+if (prevBtn) prevBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  prevCard();
+});
+
+if (nextBtn) nextBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  nextCard();
+});
+
+// Клик по индикаторам
+document.querySelectorAll('.dot').forEach(dot => {
+  dot.addEventListener('click', function() {
+    const index = parseInt(this.dataset.index);
+    goToCard(index);
+  });
+});
+
+// === СВАЙП НА КАРТОЧКАХ ===
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.querySelectorAll('.hero-card').forEach(card => {
+  card.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  
+  card.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 30) { // Минимальный свайп 30px
+      if (diff > 0) {
+        nextCard();
+      } else {
+        prevCard();
+      }
+    }
+  }, { passive: true });
+});
+
+// === ПЕРЕЗАПУСК КАРУСЕЛИ ПРИ ВОЗВРАТЕ НА ГЛАВНУЮ ===
+const originalShow2 = show;
+show = function(id) {
+  originalShow2(id);
+  if (id === 'homeScreen') {
+    setTimeout(() => {
+      // Сбрасываем на первую карточку
+      goToCard(0);
+    }, 300);
+  }
+};
+
+// Инициализация
+setTimeout(() => {
+  goToCard(0);
+}, 500);
 (async () => {
   try {
     await loadShowcase();
