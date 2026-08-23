@@ -289,3 +289,91 @@
   transform: scale(0.95);
   animation-play-state: paused;
 }
+/* === СТРЕЛКИ КАРУСЕЛИ === */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  font-size: 24px;
+  line-height: 34px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  user-select: none;
+}
+
+.carousel-arrow:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-arrow:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+.carousel-prev {
+  left: -10px;
+}
+
+.carousel-next {
+  right: -10px;
+}
+
+/* === ИНДИКАТОРЫ === */
+.carousel-dots {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  background: #b8ff5c;
+  width: 24px;
+  border-radius: 4px;
+}
+
+.dot:hover {
+  background: rgba(255,255,255,0.6);
+}
+
+/* === АДАПТИВ === */
+@media (max-width: 420px) {
+  .carousel-arrow {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+    line-height: 26px;
+  }
+  .carousel-prev {
+    left: -5px;
+  }
+  .carousel-next {
+    right: -5px;
+  }
+}
