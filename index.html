@@ -1,670 +1,85 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b0b0d">
-<meta name="color-scheme" content="dark">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#09090b"><meta name="color-scheme" content="dark">
 <title>AI Фотостудия</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="style.css">
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<script>
-  window.PHOTOAI_API_URL = "https://ai-photo-studio-9lfv.onrender.com";
-</script>
+<link rel="stylesheet" href="style.css"><script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>window.PHOTOAI_API_URL="";</script>
 </head>
-
 <body>
-
 <main class="app">
-
-  <!-- ================= ГЛАВНАЯ ================= -->
-  <section id="homeScreen" class="screen home">
-
-    <header class="topbar">
-
-      <button class="home-nav active" id="homeBtn" aria-label="Главная">
-        <span class="home-icon">⌂</span>
-        <span>Главная</span>
-      </button>
-
-      <div class="brand">
-        <span class="brand-mark">✦</span>
-        <span>AI Фотостудия</span>
-      </div>
-
-      <button class="icon-btn profile-button" id="profileBtn" aria-label="Личный кабинет">
-        <img
-          id="profileAvatar"
-          src=""
-          alt="Аватар"
-          style="width:38px;height:38px;border-radius:50%;object-fit:cover;display:none;"
-        >
-        <span id="profileInitial">○</span>
-      </button>
-
-    </header>
-
-    <div class="hero-copy">
-      <div class="eyebrow">AI ФОТОСТУДИЯ</div>
-
-      <h1>
-        Твой стиль —
-        <br>
-        <em>твоя история.</em>
-      </h1>
-
-      <p>
-        Выбери категорию и создай свою идеальную фотосессию.
-      </p>
-    </div>
-
-
-    <!-- ТРИ ГЛАВНЫЕ КАРТОЧКИ -->
-    <div class="hero-stack" id="heroCards">
-
-      <button
-        class="hero-card back-card"
-        data-nav="girls"
-        id="heroCardGirls"
-        type="button"
-      >
-        <div class="hero-card-overlay"></div>
-        <div class="hero-card-content">
-          <span class="hero-card-title">Фотосессия для Девушек</span>
-        </div>
-      </button>
-
-
-      <button
-        class="hero-card main-card"
-        data-nav="boys"
-        id="heroCardBoys"
-        type="button"
-      >
-        <div class="hero-card-overlay"></div>
-        <div class="shine"></div>
-
-        <div class="hero-card-content">
-          <span class="hero-card-title">Фотосессия для Парней</span>
-          <small>AI ФОТОСТУДИЯ</small>
-        </div>
-      </button>
-
-
-      <button
-        class="hero-card front-card"
-        data-nav="couple"
-        id="heroCardCouple"
-        type="button"
-      >
-        <div class="hero-card-overlay"></div>
-
-        <div class="hero-card-content">
-          <span class="hero-card-title">Фотосессия для Двоих</span>
-        </div>
-      </button>
-
-    </div>
-
-
-    <!-- БЕСПЛАТНАЯ ГЕНЕРАЦИЯ -->
-    <div class="free-pill">
-
-      <b>1</b>
-
-      <span>
-        бесплатная генерация
-        <br>
-        <small>одна попытка</small>
-      </span>
-
-    </div>
-
-
-    <button class="primary hero-cta" id="startBtn">
-      Создать фото
-      <span>→</span>
-    </button>
-
-
-    <!-- ПОПУЛЯРНЫЕ СТИЛИ -->
-    <div class="section-head">
-      <div>
-        <small>ПОПУЛЯРНЫЕ СТИЛИ</small>
-        <h2>Выбери настроение</h2>
-      </div>
-    </div>
-
-    <div class="showcase" id="showcase"></div>
-
-  </section>
-
-
-
-  <!-- ================= КАТЕГОРИЯ ================= -->
-
-  <section class="screen hidden" id="categoryScreen">
-
-    <header class="page-head">
-
-      <button class="back" id="categoryBackBtn">
-        ← Назад
-      </button>
-
-      <div>
-        <div class="eyebrow" id="categoryEyebrow">
-          КОЛЛЕКЦИЯ
-        </div>
-
-        <h2 id="categoryTitle">
-          Фотосессия
-        </h2>
-      </div>
-
-    </header>
-
-    <p id="categoryDesc" class="muted">
-      Выбери фотосет
-    </p>
-
-    <div class="showcase" id="categoryShowcase"></div>
-
-  </section>
-
-
-
-  <!-- ================= ЗАГРУЗКА ФОТО ================= -->
-
-  <section class="screen hidden" id="uploadScreen">
-
-    <button class="back" id="uploadBackBtn">
-      ← Назад
-    </button>
-
-    <div class="step">
-      01 / 02
-    </div>
-
-    <h2>
-      Загрузи фото
-    </h2>
-
-    <p id="uploadHint">
-      Выбери один чёткий снимок. Лицо должно быть хорошо видно.
-    </p>
-
-
-    <!-- ПЕРВОЕ ФОТО -->
-
-    <label class="upload" id="uploadLabel1">
-
-      <input
-        id="photoInput1"
-        type="file"
-        accept="image/*"
-      >
-
-      <div id="uploadContent1">
-
-        <div class="upload-icon">
-          ＋
-        </div>
-
-        <strong id="uploadText1">
-          📸 Загрузить фото
-        </strong>
-
-        <span>
-          JPG, PNG · до 10 МБ
-        </span>
-
-      </div>
-
-    </label>
-
-
-    <div
-      class="photo-preview hidden"
-      id="photoPreview1"
-    >
-      <img
-        id="previewImg1"
-        alt="Предпросмотр"
-      >
-    </div>
-
-
-
-    <!-- ВТОРОЕ ФОТО ДЛЯ ПАР -->
-
-    <label
-      class="upload hidden"
-      id="uploadLabel2"
-    >
-
-      <input
-        id="photoInput2"
-        type="file"
-        accept="image/*"
-      >
-
-      <div id="uploadContent2">
-
-        <div class="upload-icon">
-          ＋
-        </div>
-
-        <strong id="uploadText2">
-          📸 Фото второго человека
-        </strong>
-
-        <span>
-          JPG, PNG · до 10 МБ
-        </span>
-
-      </div>
-
-    </label>
-
-
-    <div
-      class="photo-preview hidden"
-      id="photoPreview2"
-    >
-      <img
-        id="previewImg2"
-        alt="Предпросмотр"
-      >
-    </div>
-
-
-    <button
-      class="primary disabled"
-      id="continueBtn"
-    >
-      Сгенерировать 40 фото
-      <span>→</span>
-    </button>
-
-  </section>
-
-
-
-  <!-- ================= ЛИЧНЫЙ КАБИНЕТ ================= -->
-
-  <section
-    class="screen hidden"
-    id="profileScreen"
-  >
-
-    <button
-      class="back"
-      id="profileBackBtn"
-    >
-      ← Главная
-    </button>
-
-
-    <div class="profile-top">
-
-      <div>
-
-        <small>
-          ЛИЧНЫЙ КАБИНЕТ
-        </small>
-
-        <h2 id="profileName">
-          Пользователь
-        </h2>
-
-        <span id="profileUsername"></span>
-
-      </div>
-
-
-      <div class="balance-card">
-
-        <small>
-          БАЛАНС
-        </small>
-
-        <b id="profileBalance">
-          0
-        </b>
-
-        <span>
-          кредитов
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <div
-      class="free-info"
-      id="freeInfo"
-    >
-      Бесплатная генерация: доступна
-    </div>
-
-
-    <button
-      class="primary"
-      id="topupBtn"
-    >
-      Пополнить баланс
-    </button>
-
-
-    <!-- АДМИНКА ВИДНА ТОЛЬКО АДМИНУ -->
-
-    <div
-      id="adminLinkWrap"
-      class="hidden"
-    >
-
-      <button
-        class="secondary admin-access"
-        id="adminBtn"
-      >
-        <span>⚙</span>
-        Панель управления
-      </button>
-
-    </div>
-
-
-    <h3>
-      Мои генерации
-    </h3>
-
-    <div
-      id="history"
-      class="history"
-    ></div>
-
-
-    <h3>
-      Избранное
-    </h3>
-
-    <div
-      id="favorites"
-      class="history"
-    ></div>
-
-
-    <h3>
-      Платежи
-    </h3>
-
-    <div
-      id="payments"
-      class="history"
-    ></div>
-
-  </section>
-
-
-
-  <!-- ================= АДМИНКА ================= -->
-
-  <section
-    class="screen hidden"
-    id="adminScreen"
-  >
-
-    <button
-      class="back"
-      id="adminBackBtn"
-    >
-      ← Кабинет
-    </button>
-
-
-    <div class="admin-title">
-
-      <div>
-
-        <div class="step">
-          УПРАВЛЕНИЕ
-        </div>
-
-        <h2>
-          Панель управления
-        </h2>
-
-      </div>
-
-      <span class="admin-badge">
-        @tgfsb
-      </span>
-
-    </div>
-
-
-    <!-- СТАТИСТИКА -->
-
-    <div
-      class="admin-grid"
-      id="adminStats"
-    ></div>
-
-
-    <!-- ВКЛАДКИ -->
-
-    <div class="admin-tabs">
-
-      <button
-        class="active"
-        data-atab="users"
-      >
-        Пользователи
-      </button>
-
-      <button
-        data-atab="showcase"
-      >
-        Витрина
-      </button>
-
-      <button
-        data-atab="settings"
-      >
-        Настройки
-      </button>
-
-    </div>
-
-
-
-    <!-- ПОЛЬЗОВАТЕЛИ -->
-
-    <div id="adminUsersTab">
-
-      <div class="admin-tools">
-
-        <input
-          id="userSearch"
-          placeholder="Поиск по @username или имени"
-        >
-
-        <button
-          class="secondary"
-          id="refreshAdmin"
-        >
-          Обновить
-        </button>
-
-      </div>
-
-
-      <div
-        id="adminUsers"
-        class="history"
-      ></div>
-
-    </div>
-
-
-
-    <!-- ВИТРИНА -->
-
-    <div
-      id="adminShowcaseTab"
-      class="hidden"
-    >
-
-      <form
-        id="showcaseForm"
-        class="admin-form"
-        enctype="multipart/form-data"
-      >
-
-        <input
-          name="title"
-          placeholder="Название образа"
-          required
-        >
-
-        <input
-          name="category"
-          placeholder="Категория"
-          value="Девушки"
-        >
-
-        <textarea
-          name="description"
-          placeholder="Описание"
-        ></textarea>
-
-        <input
-          name="priceCredits"
-          type="number"
-          min="0"
-          value="40"
-          placeholder="Цена в кредитах"
-        >
-
-        <label class="check">
-
-          <input
-            name="isPopular"
-            type="checkbox"
-            value="1"
-          >
-
-          Популярный
-
-        </label>
-
-
-        <input
-          name="images"
-          type="file"
-          accept="image/*"
-          multiple
-        >
-
-
-        <button class="primary">
-          Добавить образ
-        </button>
-
-      </form>
-
-
-      <div
-        id="adminShowcase"
-        class="history"
-      ></div>
-
-    </div>
-
-
-
-    <!-- НАСТРОЙКИ -->
-
-    <div
-      id="adminSettingsTab"
-      class="hidden"
-    >
-
-      <div class="setting-card">
-
-        <div>
-
-          <b>
-            Бесплатная генерация
-          </b>
-
-          <span>
-            Один пользователь получает одну бесплатную генерацию.
-          </span>
-
-        </div>
-
-
-        <input
-          id="freeLimitInput"
-          type="number"
-          min="1"
-          max="1"
-          value="1"
-          disabled
-        >
-
-
-        <button
-          class="secondary"
-          id="saveSettings"
-        >
-          Сохранить
-        </button>
-
-      </div>
-
-
-      <div class="setting-card">
-
-        <div>
-
-          <b>
-            Администратор
-          </b>
-
-          <span>
-            Панель управления доступна владельцу Telegram ID.
-          </span>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-</main>
-
-
-<!-- API: Render -->
-
-<script>
-  window.PHOTOAI_API_URL =
-    "https://ai-photo-studio-9lfv.onrender.com";
-</script>
-
-
-<script src="app.js"></script>
-
-</body>
-</html>
+<section id="homeScreen" class="screen home">
+<header class="topbar">
+  <button class="home-nav active" id="homeBtn"><span class="home-dot">⌂</span><span>Главная</span></button>
+  <div class="brand">AI Фотостудия</div>
+  <button class="profile-orb" id="profileBtn" aria-label="Личный кабинет">
+    <img id="profileAvatar" alt="">
+    <span id="profileInitial">○</span>
+  </button>
+</header>
+<div class="hero-copy"><div class="eyebrow">AI ФОТОСТУДИЯ</div><h1>Твой стиль —<br><em>твоя история.</em></h1><p>Выбери фотосессию и создай серию кадров, которую хочется сохранить.</p></div>
+<div class="hero-stack" id="heroStack"></div>
+<div class="free-pill"><b>1</b><span>бесплатная генерация<br><small>одна попытка</small></span></div>
+<button class="primary hero-cta" id="freeBtn">Попробовать бесплатно <span>→</span></button>
+<div class="section-head"><div><small>ГОТОВЫЕ ФОТОСЕССИИ</small><h2>Выбери свой образ</h2></div></div>
+<div class="showcase" id="showcase"></div>
+</section>
+
+<section class="screen hidden" id="categoryScreen">
+<header class="page-head"><button class="back" id="categoryBackBtn">← Главная</button><div><div class="eyebrow" id="categoryEyebrow">КОЛЛЕКЦИЯ</div><h2 id="categoryTitle">Фотосессия для Парней</h2></div></header>
+<p id="categoryDesc" class="muted"></p><div class="category-grid" id="categoryShowcase"></div>
+</section>
+
+<section class="screen hidden" id="uploadScreen">
+<button class="back" id="uploadBackBtn">← Назад</button><div class="step" id="uploadStep">ФОТО</div><h2 id="uploadTitle">Загрузи фото</h2><p id="uploadHint">Один чёткий снимок. Лицо должно быть хорошо видно.</p>
+<div id="uploadFields"></div><button class="primary disabled" id="continueBtn">Продолжить <span>→</span></button>
+</section>
+
+<section class="screen hidden" id="confirmScreen">
+<button class="back" id="confirmBackBtn">← Назад</button><div class="step">ГОТОВО К ЗАПУСКУ</div><div class="confirm-card"><div class="confirm-image" id="confirmImage"></div><div><small id="confirmCategory"></small><h2 id="confirmTitle"></h2><p id="confirmDescription"></p></div><div class="confirm-meta"><span>40 фотографий</span><b id="confirmPrice"></b></div></div>
+<button class="primary" id="generateBtn">Оплатить и создать 40 фото <span>→</span></button><p class="muted center">Оплата подключается отдельным провайдером. Сейчас режим тестирования.</p>
+</section>
+
+<section class="screen hidden" id="profileScreen">
+<header class="page-head"><button class="back" id="profileBackBtn">← Главная</button><div><div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h2>Мой профиль</h2></div></header>
+<div class="profile-card"><div class="profile-user"><div class="profile-avatar-large"><img id="profileAvatarLarge" alt=""><span id="profileInitialLarge">○</span></div><div><b id="profileName">Пользователь</b><span id="profileUsername"></span></div></div><div class="balance-card"><small>БАЛАНС</small><b id="profileBalance">0</b><span>кредитов</span></div></div>
+<div class="free-info" id="freeInfo"></div><button class="primary" id="topupBtn">Пополнить баланс</button>
+<div id="adminLinkWrap" class="hidden"><button class="secondary admin-access" id="adminBtn">⚙ Панель управления</button></div>
+<h3>Избранные фотосессии</h3><div id="favorites" class="showcase compact"></div>
+<h3>Мои генерации</h3><div id="history" class="history"></div>
+</section>
+
+<section class="screen hidden" id="adminScreen">
+<header class="page-head"><button class="back" id="adminBackBtn">← Кабинет</button><div><div class="step">CONTROL CENTER</div><h2>Админка</h2></div></header>
+<div class="admin-grid" id="adminStats"></div>
+<div class="admin-tabs"><button class="active" data-atab="cards">Карточки</button><button data-atab="packs">Фотосессии</button><button data-atab="free">Бесплатная</button><button data-atab="users">Пользователи</button></div>
+<div id="adminCardsTab">
+  <div class="admin-note">Три карточки главного экрана. Меняй текст и ссылку на изображение — ничего в коде трогать не нужно.</div>
+  <div id="heroAdminList" class="admin-list"></div>
+</div>
+<div id="adminPacksTab" class="hidden">
+  <form id="packForm" class="admin-form">
+    <select name="category" required><option value="him">Фотосессия для Парней</option><option value="her">Фотосессия для Девушек</option><option value="couple">Фотосессия для Двоих</option></select>
+    <input name="title" placeholder="Название пака, например: Брутальная фотосессия" required>
+    <textarea name="description" placeholder="Короткое описание"></textarea><input name="image_url" placeholder="Ссылка на изображение (https://...)" required>
+    <input name="price_credits" type="number" min="0" value="40" placeholder="Цена в кредитах">
+    <div class="prompts-grid" id="newPrompts"><label class="prompt-row"><span>01</span><textarea name="prompt_1" placeholder="Промт для фотографии №1" required></textarea></label><label class="prompt-row"><span>02</span><textarea name="prompt_2" placeholder="Промт для фотографии №2" required></textarea></label><label class="prompt-row"><span>03</span><textarea name="prompt_3" placeholder="Промт для фотографии №3" required></textarea></label><label class="prompt-row"><span>04</span><textarea name="prompt_4" placeholder="Промт для фотографии №4" required></textarea></label><label class="prompt-row"><span>05</span><textarea name="prompt_5" placeholder="Промт для фотографии №5" required></textarea></label><label class="prompt-row"><span>06</span><textarea name="prompt_6" placeholder="Промт для фотографии №6" required></textarea></label><label class="prompt-row"><span>07</span><textarea name="prompt_7" placeholder="Промт для фотографии №7" required></textarea></label><label class="prompt-row"><span>08</span><textarea name="prompt_8" placeholder="Промт для фотографии №8" required></textarea></label><label class="prompt-row"><span>09</span><textarea name="prompt_9" placeholder="Промт для фотографии №9" required></textarea></label><label class="prompt-row"><span>10</span><textarea name="prompt_10" placeholder="Промт для фотографии №10" required></textarea></label><label class="prompt-row"><span>11</span><textarea name="prompt_11" placeholder="Промт для фотографии №11" required></textarea></label><label class="prompt-row"><span>12</span><textarea name="prompt_12" placeholder="Промт для фотографии №12" required></textarea></label><label class="prompt-row"><span>13</span><textarea name="prompt_13" placeholder="Промт для фотографии №13" required></textarea></label><label class="prompt-row"><span>14</span><textarea name="prompt_14" placeholder="Промт для фотографии №14" required></textarea></label><label class="prompt-row"><span>15</span><textarea name="prompt_15" placeholder="Промт для фотографии №15" required></textarea></label><label class="prompt-row"><span>16</span><textarea name="prompt_16" placeholder="Промт для фотографии №16" required></textarea></label><label class="prompt-row"><span>17</span><textarea name="prompt_17" placeholder="Промт для фотографии №17" required></textarea></label><label class="prompt-row"><span>18</span><textarea name="prompt_18" placeholder="Промт для фотографии №18" required></textarea></label><label class="prompt-row"><span>19</span><textarea name="prompt_19" placeholder="Промт для фотографии №19" required></textarea></label><label class="prompt-row"><span>20</span><textarea name="prompt_20" placeholder="Промт для фотографии №20" required></textarea></label><label class="prompt-row"><span>21</span><textarea name="prompt_21" placeholder="Промт для фотографии №21" required></textarea></label><label class="prompt-row"><span>22</span><textarea name="prompt_22" placeholder="Промт для фотографии №22" required></textarea></label><label class="prompt-row"><span>23</span><textarea name="prompt_23" placeholder="Промт для фотографии №23" required></textarea></label><label class="prompt-row"><span>24</span><textarea name="prompt_24" placeholder="Промт для фотографии №24" required></textarea></label><label class="prompt-row"><span>25</span><textarea name="prompt_25" placeholder="Промт для фотографии №25" required></textarea></label><label class="prompt-row"><span>26</span><textarea name="prompt_26" placeholder="Промт для фотографии №26" required></textarea></label><label class="prompt-row"><span>27</span><textarea name="prompt_27" placeholder="Промт для фотографии №27" required></textarea></label><label class="prompt-row"><span>28</span><textarea name="prompt_28" placeholder="Промт для фотографии №28" required></textarea></label><label class="prompt-row"><span>29</span><textarea name="prompt_29" placeholder="Промт для фотографии №29" required></textarea></label><label class="prompt-row"><span>30</span><textarea name="prompt_30" placeholder="Промт для фотографии №30" required></textarea></label><label class="prompt-row"><span>31</span><textarea name="prompt_31" placeholder="Промт для фотографии №31" required></textarea></label><label class="prompt-row"><span>32</span><textarea name="prompt_32" placeholder="Промт для фотографии №32" required></textarea></label><label class="prompt-row"><span>33</span><textarea name="prompt_33" placeholder="Промт для фотографии №33" required></textarea></label><label class="prompt-row"><span>34</span><textarea name="prompt_34" placeholder="Промт для фотографии №34" required></textarea></label><label class="prompt-row"><span>35</span><textarea name="prompt_35" placeholder="Промт для фотографии №35" required></textarea></label><label class="prompt-row"><span>36</span><textarea name="prompt_36" placeholder="Промт для фотографии №36" required></textarea></label><label class="prompt-row"><span>37</span><textarea name="prompt_37" placeholder="Промт для фотографии №37" required></textarea></label><label class="prompt-row"><span>38</span><textarea name="prompt_38" placeholder="Промт для фотографии №38" required></textarea></label><label class="prompt-row"><span>39</span><textarea name="prompt_39" placeholder="Промт для фотографии №39" required></textarea></label><label class="prompt-row"><span>40</span><textarea name="prompt_40" placeholder="Промт для фотографии №40" required></textarea></label></div>
+    <label class="check"><input name="is_popular" type="checkbox"> Показывать как популярное</label>
+    <button class="primary">Добавить фотосессию</button>
+  </form>
+  <div class="admin-note">Каждый промт — отдельное большое поле. Промт №01 используется для фото №01, промт №40 — для фото №40.</div>
+  <div id="packAdminList" class="admin-list"></div>
+</div>
+<div id="adminFreeTab" class="hidden">
+  <div class="setting-card"><div><b>Промт бесплатной генерации</b><span>Один универсальный промт. Категорию пользователь не выбирает.</span></div></div>
+  <textarea id="freePromptInput" class="big-textarea" placeholder="Промт для бесплатной генерации"></textarea>
+  <input type="hidden" id="freeLimitInput" value="1">
+  <button class="primary" id="saveFreePrompt">Сохранить промт</button>
+</div>
+<div id="adminUsersTab" class="hidden"><div class="admin-tools"><input id="userSearch" placeholder="Поиск @username / имя / Telegram ID"><button class="secondary" id="refreshAdmin">Обновить</button></div><div id="adminUsers" class="history"></div></div>
+</section>
+</main><script src="app.js"></script>
+</body></html>
