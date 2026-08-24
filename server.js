@@ -40,21 +40,52 @@ const DEFAULT_PACKS=[
  {id:3,category:'couple',title:'Кино для двоих',description:'Совместные кадры с атмосферой большого кино.',image_url:'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=900&h=1100&fit=crop',price_credits:40,is_popular:1,prompts:Array.from({length:40},(_,i)=>`Совместная фотосессия пары, кадр ${i+1}, cinematic romantic scene, natural interaction, realistic faces, premium photography, preserve both identities, vertical composition, highly detailed.`)}
 ];
 
-function parseInitData(initData){if(!initData)return null;const p=new URLSearchParams(initData);const hash=p.get('hash');const authDate=Number(p.get('auth_date')||0);const token=process.env.BOT_TOKEN;if(!hash||!token||!authDate||Date.now()/1000-authDate>86400)return null;p.delete('hash');const check=[...p.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${k}=${v}`).join('\n');const secret=crypto.createHmac('sha256','WebAppData').update(token).digest();const calc=crypto.createHmac('sha256',secret).update(check).digest('hex');if(calc.length!==hash.length||!crypto.timingSafeEqual(Buffer.from(calc),Buffer.from(hash)))return null;try{return JSON.parse(p.get('user')||'{}')}catch{return null}}
-async function ensureUser(tgUser){
- let {data:user,error}=await supabase.from('users').select('*').eq('telegram_id',String(tgUser.id)).maybeSingle();
- if(error) throw error;
- const patch={username:tgUser.username||null,first_name:tgUser.first_name||null,last_name:tgUser.last_name||null};
- if(Object.prototype.hasOwnProperty.call(tgUser,'photo_url')) patch.photo_url=tgUser.photo_url||null;
- if(!user){
-   const r=await supabase.from('users').insert({...patch,telegram_id:String(tgUser.id),free_generations_limit:1,free_generations_used:0}).select().single();
-   if(r.error)throw r.error; user=r.data;
-   await supabase.from('credits').insert({user_id:user.id,balance:0});
- } else {
-   const r=await supabase.from('users').update(patch).eq('id',user.id).select().single();
-   if(r.error)throw r.error; user=r.data;
- }
- return user;
+async function ensureUser(tgUser) {
+  let { data: user, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('telegram_id', String(tgUser.id))
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const patch = {
+    username: tgUser.username || null,
+    first_name: tgUser.first_name || null,
+    last_name: tgUser.last_name || null,
+  };
+
+  // ✅ БЕЗОПАСНАЯ ПРОВЕРКА: фото_url может отсутствовать
+  if (tgUser.photo_url !== undefined && tgUser.photo_url !== null) {
+    patch.photo_url = tgUser.photo_url;
+  }
+
+  if (!user) {
+    const r = await supabase
+      .from('users')
+      .insert({
+        ...patch,
+        telegram_id: String(tgUser.id),
+        free_generations_limit: 1,
+        free_generations_used: 0,
+      })
+      .select()
+      .single();
+    if (r.error) throw r.error;
+    user = r.data;
+    await supabase.from('credits').insert({ user_id: user.id, balance: 0 });
+  } else {
+    const r = await supabase
+      .from('users')
+      .update(patch)
+      .eq('id', user.id)
+      .select()
+      .single();
+    if (r.error) throw r.error;
+    user = r.data;
+  }
+
+  return user;
 }
 async function requireUser(req,res,next){try{const u=parseInitData(req.headers['x-telegram-init-data']);if(!u)return res.status(401).json({error:'Telegram authorization required'});req.tgUser=u;req.user=await ensureUser(u);const adminId=process.env.ADMIN_TELEGRAM_ID||'6711149865';const adminName=(process.env.ADMIN_TELEGRAM_USERNAME||'tgfsb').replace('@','').toLowerCase();req.isAdmin=String(u.id)===adminId||String(u.username||'').toLowerCase()===adminName;next()}catch(e){console.error(e);res.status(500).json({error:'Authorization error'})}}
 async function requireAdmin(req,res,next){await requireUser(req,res,()=>req.isAdmin?next():res.status(403).json({error:'Admin access denied'}))}
