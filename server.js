@@ -87,7 +87,30 @@ async function ensureUser(tgUser) {
 
   return user;
 }
-async function requireUser(req,res,next){try{const u=parseInitData(req.headers['x-telegram-init-data']);if(!u)return res.status(401).json({error:'Telegram authorization required'});req.tgUser=u;req.user=await ensureUser(u);const adminId=process.env.ADMIN_TELEGRAM_ID||'6711149865';const adminName=(process.env.ADMIN_TELEGRAM_USERNAME||'tgfsb').replace('@','').toLowerCase();req.isAdmin=String(u.id)===adminId||String(u.username||'').toLowerCase()===adminName;next()}catch(e){console.error(e);res.status(500).json({error:'Authorization error'})}}
+async function requireUser(req, res, next) {
+  try {
+    const u = parseInitData(req.headers['x-telegram-init-data']);
+    if (!u) {
+      return res.status(401).json({ error: 'Telegram authorization required' });
+    }
+    
+    req.tgUser = u;
+    req.user = await ensureUser(u);
+    
+    const adminId = process.env.ADMIN_TELEGRAM_ID || '6711149865';
+    const adminName = (process.env.ADMIN_TELEGRAM_USERNAME || 'tgfsb').replace('@', '').toLowerCase();
+    req.isAdmin = String(u.id) === adminId || String(u.username || '').toLowerCase() === adminName;
+    
+    next();
+  } catch (e) {
+    console.error('requireUser error:', e);
+    // ✅ ОТПРАВЛЯЕМ ОШИБКУ, НО НЕ ПАДАЕМ
+    return res.status(500).json({ 
+      error: 'Authorization error', 
+      details: e.message 
+    });
+  }
+}
 async function requireAdmin(req,res,next){await requireUser(req,res,()=>req.isAdmin?next():res.status(403).json({error:'Admin access denied'}))}
 async function setting(key,def=null){const {data}=await supabase.from('settings').select('value').eq('key',key).maybeSingle();return data?.value??def}
 async function saveSetting(key,value){return supabase.from('settings').upsert({key,value:String(value)},{onConflict:'key'})}
