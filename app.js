@@ -38,23 +38,25 @@ function show(id) {
 
 function setAvatar() {
   try {
-    const urls = [tgUser.photo_url, me?.user?.photo_url].filter(Boolean);
-    document.querySelectorAll('#profileAvatar, #profileAvatarLarge').forEach(img => {
-      if (urls[0]) {
-        img.src = urls[0];
-        img.classList.add('loaded');
-        const parent = img.parentElement;
-        if (parent) {
-          const span = parent.querySelector('span');
-          if (span) span.classList.add('hidden');
-        }
-      }
-    });
-    const n = (tgUser.first_name || me?.user?.first_name || 'П').trim()[0] || 'П';
-    const initialEl = $('profileInitial');
-    if (initialEl) initialEl.textContent = n;
-    const initialLarge = $('profileInitialLarge');
-    if (initialLarge) initialLarge.textContent = n;
+    const photoUrl = tgUser?.photo_url || me?.user?.photo_url || null;
+    const avatarImg = $('#profileAvatar');
+    const avatarLarge = $('#profileAvatarLarge');
+    
+    if (photoUrl) {
+      if (avatarImg) { avatarImg.src = photoUrl; avatarImg.classList.add('loaded'); }
+      if (avatarLarge) { avatarLarge.src = photoUrl; avatarLarge.classList.add('loaded'); }
+      // Скрываем инициалы
+      const initialEl = $('#profileInitial');
+      if (initialEl) initialEl.classList.add('hidden');
+      const initialLarge = $('#profileInitialLarge');
+      if (initialLarge) initialLarge.classList.add('hidden');
+    } else {
+      const n = (tgUser.first_name || me?.user?.first_name || 'П').trim()[0] || 'П';
+      const initialEl = $('#profileInitial');
+      if (initialEl) { initialEl.textContent = n; initialEl.classList.remove('hidden'); }
+      const initialLarge = $('#profileInitialLarge');
+      if (initialLarge) { initialLarge.textContent = n; initialLarge.classList.remove('hidden'); }
+    }
   } catch (e) {
     console.error('setAvatar error:', e);
   }
@@ -66,20 +68,21 @@ function renderHero() {
     if (!stack) return;
     stack.innerHTML = '';
     const byKey = Object.fromEntries(heroCards.map(x => [x.key, x]));
-    const specs = { back: { cls: 'back-card' }, main: { cls: 'main-card' }, front: { cls: 'front-card' } };
     const order = ['her', 'him', 'couple'];
-    const slots = ['back', 'main', 'front'];
+    const classes = ['back-card', 'main-card', 'front-card'];
+    
     order.forEach((key, i) => {
-      const c = byKey[key] || { key, title: key, image_url: '' };
+      const c = byKey[key] || { key, title: key, image_url: '', description: '' };
       const b = document.createElement('button');
-      b.className = `hero-card ${specs[slots[i]].cls}`;
+      b.className = `hero-card ${classes[i]}`;
       b.dataset.nav = key;
       b.innerHTML = `<div class="hero-copy-card"><strong>${esc(c.title)}</strong><small>${esc(c.description || '')}</small></div><span class="hero-arrow">↗</span>`;
-      b.style.backgroundImage = `linear-gradient(160deg,transparent 35%,#000b),url('${c.image_url}')`;
+      // Используем image_url (не preview_images)
+      const imgUrl = c.image_url || '';
+      b.style.backgroundImage = `linear-gradient(160deg,transparent 35%,#000b),url('${imgUrl}')`;
       b.onclick = () => openCategory(key);
       stack.appendChild(b);
     });
-    bindHeroSwipe();
     startHeroRotation();
   } catch (e) {
     console.error('renderHero error:', e);
@@ -93,7 +96,7 @@ function startHeroRotation() {
     try {
       heroIndex = (heroIndex + 1) % 3;
       const keys = ['her', 'him', 'couple'];
-      const rotated = [keys[(heroIndex) % 3], keys[(heroIndex + 1) % 3], keys[(heroIndex + 2) % 3]];
+      const rotated = [keys[heroIndex], keys[(heroIndex + 1) % 3], keys[(heroIndex + 2) % 3]];
       const stack = $('heroStack');
       if (!stack) return;
       [...stack.children].forEach((el, i) => el.dataset.nav = rotated[i]);
@@ -101,25 +104,6 @@ function startHeroRotation() {
       setTimeout(() => stack.classList.remove('rotating'), 950);
     } catch (e) { console.error('startHeroRotation error:', e); }
   }, 4500);
-}
-
-function bindHeroSwipe() {
-  let x = 0;
-  const s = $('heroStack');
-  if (!s) return;
-  s.onpointerdown = e => { x = e.clientX; s.setPointerCapture?.(e.pointerId); };
-  s.onpointerup = e => {
-    try {
-      if (Math.abs(e.clientX - x) > 45) {
-        heroIndex = (heroIndex + (e.clientX < x ? 1 : 2)) % 3;
-        const keys = ['her', 'him', 'couple'];
-        const rotated = [keys[heroIndex], keys[(heroIndex + 1) % 3], keys[(heroIndex + 2) % 3]];
-        [...s.children].forEach((el, i) => el.dataset.nav = rotated[i]);
-        s.classList.add('rotating');
-        setTimeout(() => s.classList.remove('rotating'), 950);
-      }
-    } catch (e) { console.error('bindHeroSwipe error:', e); }
-  };
 }
 
 function openCategory(c) {
@@ -133,7 +117,8 @@ function openCategory(c) {
     const descEl = $('categoryDesc');
     if (descEl) descEl.textContent = m.desc;
     const target = $('categoryShowcase');
-    renderPacks(packs.filter(p => p.category === c), target);
+    const filtered = packs.filter(p => p.category === c);
+    renderPacks(filtered, target);
     show('categoryScreen');
   } catch (e) { console.error('openCategory error:', e); }
 }
@@ -141,22 +126,48 @@ function openCategory(c) {
 function renderPacks(rows, target) {
   try {
     if (!target) return;
-    target.innerHTML = rows.length ? rows.map(p => {
-      const fav = me?.favorites?.includes(p.id);
-      return `<article class="pack-card"><button class="pack-open" data-id="${p.id}"><div class="pack-image"><img src="${p.image_url || p.preview_images?.[0] || ''}" alt=""><div class="pack-gradient"></div><span class="pack-badge">${p.is_popular ? 'ПОПУЛЯРНО' : 'ФОТОСЕССИЯ'}</span></div><div class="pack-info"><b>${p.title}</b><span>${p.description || '40 кадров в одном стиле'}</span><strong>${p.price_credits} кредитов · 40 фото</strong></div></button><button class="fav ${fav ? 'on' : ''}" data-fav="${p.id}" aria-label="Избранное">${fav ? '♥' : '♡'}</button></article>`;
-    }).join('') : '<div class="empty">В этой категории пока нет фотосессий. Добавь их в админке.</div>';
-    target.querySelectorAll('[data-id]').forEach(b => b.onclick = () => openPack(Number(b.dataset.id)));
-    target.querySelectorAll('[data-fav]').forEach(b => b.onclick = async e => {
-      e.stopPropagation();
-      try {
-        const r = await api('/api/favorites/' + b.dataset.fav, { method: 'POST' });
-        if (me) me.favorites = me.favorites || [];
-        const id = Number(b.dataset.fav);
-        if (r.favorite && !me.favorites.includes(id)) me.favorites.push(id);
-        if (!r.favorite) me.favorites = me.favorites.filter(x => x !== id);
-        b.classList.toggle('on', r.favorite);
-        b.textContent = r.favorite ? '♥' : '♡';
-      } catch (err) { alert(err.message); }
+    if (!rows || rows.length === 0) {
+      target.innerHTML = '<div class="empty">В этой категории пока нет фотосессий. Добавь их в админке.</div>';
+      return;
+    }
+    target.innerHTML = rows.map(p => {
+      const fav = me?.favorites?.includes(p.id) || false;
+      const imgSrc = p.image_url || p.preview_images?.[0] || '';
+      return `<article class="pack-card">
+        <button class="pack-open" data-id="${p.id}">
+          <div class="pack-image">
+            <img src="${imgSrc}" alt="${esc(p.title)}" onerror="this.style.display='none'">
+            <div class="pack-gradient"></div>
+            <span class="pack-badge">${p.is_popular ? 'ПОПУЛЯРНО' : 'ФОТОСЕССИЯ'}</span>
+          </div>
+          <div class="pack-info">
+            <b>${esc(p.title)}</b>
+            <span>${esc(p.description || '40 кадров в одном стиле')}</span>
+            <strong>${p.price_credits || 40} кредитов · 40 фото</strong>
+          </div>
+        </button>
+        <button class="fav ${fav ? 'on' : ''}" data-fav="${p.id}" aria-label="Избранное">${fav ? '♥' : '♡'}</button>
+      </article>`;
+    }).join('');
+    
+    // Обработчики для карточек
+    target.querySelectorAll('[data-id]').forEach(b => {
+      b.onclick = () => openPack(Number(b.dataset.id));
+    });
+    // Обработчики для избранного
+    target.querySelectorAll('[data-fav]').forEach(b => {
+      b.onclick = async e => {
+        e.stopPropagation();
+        try {
+          const r = await api('/api/favorites/' + b.dataset.fav, { method: 'POST' });
+          if (me) me.favorites = me.favorites || [];
+          const id = Number(b.dataset.fav);
+          if (r.favorite && !me.favorites.includes(id)) me.favorites.push(id);
+          if (!r.favorite) me.favorites = me.favorites.filter(x => x !== id);
+          b.classList.toggle('on', r.favorite);
+          b.textContent = r.favorite ? '♥' : '♡';
+        } catch (err) { alert(err.message); }
+      };
     });
   } catch (e) { console.error('renderPacks error:', e); }
 }
@@ -175,12 +186,12 @@ function renderUpload(free) {
     const titleEl = $('uploadTitle');
     if (titleEl) titleEl.textContent = free ? 'Попробуй бесплатно' : 'Загрузи фото';
     const hintEl = $('uploadHint');
-    if (hintEl) hintEl.textContent = free ? 'Загрузишь одно фото — получишь один тестовый AI-кадр.' : 'Выбери фото. Для совместной фотосессии нужны два снимка.';
+    if (hintEl) hintEl.textContent = free ? 'Загрузи одно фото — получишь один тестовый AI-кадр.' : 'Выбери фото. Для совместной фотосессии нужны два снимка.';
     const couple = currentPack?.category === 'couple' && !free;
     const labels = couple ? [['sourceImage1', 'Фото первого человека'], ['sourceImage2', 'Фото второго человека']] : [['sourceImage1', 'Твоя фотография']];
     const fields = $('uploadFields');
     if (!fields) return;
-    fields.innerHTML = labels.map((x, i) =>
+    fields.innerHTML = labels.map((x) =>
       `<label class="upload"><input type="file" accept="image/*" data-file="${x[0]}"><div><div class="upload-icon">＋</div><strong>${x[1]}</strong><span>JPG, PNG · до 10 МБ</span><small class="file-name" data-name="${x[0]}"></small></div></label>`
     ).join('');
     fields.querySelectorAll('input').forEach(inp => {
@@ -210,17 +221,17 @@ function openConfirm() {
     const files = selectedFiles.map(x => x.file);
     if (!currentPack) { generate(true); return; }
     if (files.length < (currentPack.category === 'couple' ? 2 : 1)) return;
-    const img = currentPack.image_url || currentPack.preview_images?.[0];
+    const img = currentPack.image_url || currentPack.preview_images?.[0] || '';
     const confirmImage = $('confirmImage');
     if (confirmImage) confirmImage.style.backgroundImage = `url('${img}')`;
     const catEl = $('confirmCategory');
-    if (catEl) catEl.textContent = categoryMeta[currentPack.category].eyebrow;
+    if (catEl) catEl.textContent = categoryMeta[currentPack.category]?.eyebrow || '';
     const titleEl = $('confirmTitle');
-    if (titleEl) titleEl.textContent = currentPack.title;
+    if (titleEl) titleEl.textContent = currentPack.title || '';
     const descEl = $('confirmDescription');
     if (descEl) descEl.textContent = currentPack.description || '';
     const priceEl = $('confirmPrice');
-    if (priceEl) priceEl.textContent = `${currentPack.price_credits} кредитов`;
+    if (priceEl) priceEl.textContent = `${currentPack.price_credits || 40} кредитов`;
     show('confirmScreen');
   } catch (e) { console.error('openConfirm error:', e); }
 }
@@ -291,14 +302,14 @@ function renderFavorites() {
 async function loadHome() {
   try {
     const [cards, packRows] = await Promise.all([api('/api/home'), api('/api/showcase')]);
-    heroCards = cards;
-    packs = packRows;
+    heroCards = cards || [];
+    packs = packRows || [];
     renderHero();
     const showcaseEl = $('showcase');
     if (showcaseEl) renderPacks(packs.filter(p => p.is_popular), showcaseEl);
   } catch (e) {
     console.error('loadHome error:', e);
-    alert(e.message);
+    alert('Ошибка загрузки главной страницы: ' + e.message);
   }
 }
 
@@ -434,7 +445,7 @@ window.resetFree = async id => {
 function safeAddListener(id, event, handler) {
   const el = $(id);
   if (el) el.addEventListener(event, handler);
-  else console.warn(`Элемент с id "${id}" не найден, обработчик не добавлен`);
+  else console.warn(`Элемент с id "${id}" не найден`);
 }
 
 safeAddListener('homeBtn', 'click', () => show('homeScreen'));
